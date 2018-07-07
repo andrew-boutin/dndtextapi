@@ -1,6 +1,10 @@
 # Contributing
 
-Check out the notable [packages](#PACKAGES.md).
+Check out the notable [packages](docs/PACKAGES.md).
+
+Add yourself to [contributors][docs/CONTRIBUTORS.md] if you work on something.
+
+[Design plans][DESIGNPLANS.md] may have some info on what needs work.
 
 ## Running
 
@@ -18,4 +22,4 @@ Can `curl` the available endpoints.
 
     curl -d -H "Accept:application/json" -X GET localhost:8080/channels
 
-    curl -d -H "Accept:application/json" -X GET localhost:8080/channels
+    curl -d -H "Accept:application/json" -X GET localhost:8080/channels/1

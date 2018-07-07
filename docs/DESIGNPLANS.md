@@ -1,3 +1,7 @@
+# Design Plans
+
+Some of the stuff that still has to be done and notes about how to do some of it.
+
 - unit tests
 - functional tests
 - DB Migrations

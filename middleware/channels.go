@@ -22,6 +22,7 @@ func GetChannels(c *gin.Context) {
 	channels, err := dbBackend.GetChannels()
 	if err != nil {
 		c.Error(err)
+		return
 	}
 	c.JSON(http.StatusOK, channels)
 }
