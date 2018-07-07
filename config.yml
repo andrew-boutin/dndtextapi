@@ -1,0 +1,5 @@
+backend:
+  type: "postgres"
+  user: "postgres"
+  pw: "postgres"
+  dbname: "dndtext"
