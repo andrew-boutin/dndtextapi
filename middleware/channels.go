@@ -11,8 +11,10 @@ import (
 
 func RegisterChannelsMiddleware(r *gin.Engine) {
 	r.GET("/channels", GetChannels)
-	r.GET("/channels/:id", GetChannel)
 	r.POST("/channels", CreateChannel)
+	r.GET("/channels/:id", GetChannel)
+	r.PUT("/channels/:id", UpdateChannel)
+	r.DELETE("/channels/:id", DeleteChannel)
 }
 
 func GetChannels(c *gin.Context) {
@@ -64,4 +66,50 @@ func CreateChannel(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, createdChannel)
+}
+
+func DeleteChannel(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+	idParam := c.Param("id")
+	channelID, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = dbBackend.DeleteChannel(channelID)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func UpdateChannel(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+	idParam := c.Param("id")
+	channelID, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	channel := &channels.Channel{}
+	err = c.Bind(channel)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	updatedChannel, err := dbBackend.UpdateChannel(channelID, channel)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedChannel)
 }

@@ -15,6 +15,8 @@ type Backend interface {
 	GetChannels() (*channels.ChannelCollection, error)
 	GetChannel(int) (*channels.Channel, error)
 	CreateChannel(*channels.Channel) (*channels.Channel, error)
+	DeleteChannel(int) error
+	UpdateChannel(int, *channels.Channel) (*channels.Channel, error)
 }
 
 func InitBackend(backendConfig configs.BackendConfiguration) (backendDB Backend) {

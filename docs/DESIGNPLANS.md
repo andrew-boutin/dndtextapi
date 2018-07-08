@@ -8,6 +8,11 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Authn
 - Authz
 
+Only accept application/json & look for header.
+Return content type application/json header.
+Links. Self links. Collection links.
+Swagger spec.
+
 Channel types. Single channel or multiple?
 Message types. DM, roll, player...
 

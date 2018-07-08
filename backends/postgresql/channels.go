@@ -88,4 +88,46 @@ func (backend PostgresqlBackend) CreateChannel(c *channels.Channel) (*channels.C
 	return newChannel, nil
 }
 
-// TODO: Delete, Update
+func (backend PostgresqlBackend) DeleteChannel(id int) error {
+	sql, args, err := PSQLBuilder().
+		Delete(channelsTable).
+		Where(sq.Eq{"id": id}).
+		ToSql()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = backend.db.Exec(sql, args...)
+
+	// TODO: Check result?
+
+	return err
+}
+
+func (backend PostgresqlBackend) UpdateChannel(id int, c *channels.Channel) (*channels.Channel, error) {
+	setMap := map[string]interface{}{
+		"name":        c.Name,
+		"description": c.Description,
+		"ownerid":     c.OwnerID,
+		"isprivate":   c.IsPrivate,
+		"dmid":        c.DMID,
+	}
+	sql, args, err := PSQLBuilder().
+		Update(channelsTable).
+		SetMap(setMap).
+		Where(sq.Eq{"id": id}).
+		Suffix("RETURNING id, name, description, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedChannel := &channels.Channel{}
+	err = backend.db.QueryRowx(sql, args...).StructScan(updatedChannel)
+	if err != nil {
+		return nil, err
+	}
+	return updatedChannel, nil
+}
