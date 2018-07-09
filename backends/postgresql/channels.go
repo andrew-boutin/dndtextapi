@@ -3,9 +3,13 @@ package postgresql
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/channels"
+	log "github.com/sirupsen/logrus"
 )
 
-const channelsTable = "channels"
+const (
+	channelsTable      = "channels"
+	channelsUsersTable = "channels_users"
+)
 
 var channelColumns = []string{
 	"name",
@@ -32,6 +36,19 @@ func (backend PostgresqlBackend) GetChannel(id int) (*channels.Channel, error) {
 
 	channel := &channels.Channel{}
 	err = backend.db.Get(channel, sql, args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Maybe partial users instead of full users
+	users, err := backend.GetUsersInChannel(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	channel.Users = users
 	return channel, err
 }
 
@@ -77,18 +94,35 @@ func (backend PostgresqlBackend) CreateChannel(c *channels.Channel) (*channels.C
 		ToSql()
 
 	if err != nil {
+		log.WithError(err).Error("Issue building create channel sql.")
 		return nil, err
 	}
 
 	newChannel := &channels.Channel{}
 	err = backend.db.QueryRowx(sql, args...).StructScan(newChannel)
 	if err != nil {
+		log.WithError(err).Error("Issue running create channel sql.")
 		return nil, err
 	}
+
+	// TODO: Need to add Users before returning..?
+	err = backend.AddUsersToChannel(newChannel.ID, c.Users.GetUserIDs())
+
+	if err != nil {
+		log.WithError(err).Error("Issue adding user channel mappings.")
+		return nil, err
+	}
+
 	return newChannel, nil
 }
 
 func (backend PostgresqlBackend) DeleteChannel(id int) error {
+	err := backend.RemoveUsersFromChannel(id)
+
+	if err != nil {
+		return err
+	}
+
 	sql, args, err := PSQLBuilder().
 		Delete(channelsTable).
 		Where(sq.Eq{"id": id}).
@@ -98,9 +132,8 @@ func (backend PostgresqlBackend) DeleteChannel(id int) error {
 		return err
 	}
 
-	_, err = backend.db.Exec(sql, args...)
-
 	// TODO: Check result?
+	_, err = backend.db.Exec(sql, args...)
 
 	return err
 }
@@ -129,5 +162,19 @@ func (backend PostgresqlBackend) UpdateChannel(id int, c *channels.Channel) (*ch
 	if err != nil {
 		return nil, err
 	}
+
+	err = backend.RemoveUsersFromChannel(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Need to add Users before returning..?
+	err = backend.AddUsersToChannel(id, c.Users.GetUserIDs())
+
+	if err != nil {
+		return nil, err
+	}
+
 	return updatedChannel, nil
 }

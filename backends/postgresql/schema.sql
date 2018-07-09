@@ -17,6 +17,13 @@ CREATE TABLE channels (
     lastupdated timestamp default current_timestamp
 );
 
+-- Mapping table to determine which users are in what channels
+CREATE TABLE channels_users (
+    channelid bigserial references channels(id),
+    userid bigserial references users(id),
+    createdon timestamp default current_timestamp
+);
+
 CREATE TABLE messages (
     id bigserial primary key,
     userid bigserial references users(id),
@@ -31,3 +38,7 @@ INSERT INTO users
 INSERT INTO channels
 (ownerid, dmid, name, description, isprivate) VALUES
 (1, 1, 'my channel', 'my channel description', false);
+
+INSERT INTO channels_users
+(channelid, userid) VALUES
+(1, 1)

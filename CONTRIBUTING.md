@@ -18,12 +18,12 @@ Utilize `Makefile`.
 
 Can `curl` the available endpoints.
 
-    curl -d '{"name":"my name", "description":"my description", "ownerid":1, "isprivate":false, "dmid":1}' -H "Content-Type: application/json" -X POST localhost:8080/channels
+    curl -d '{"name":"my name", "description":"my description", "ownerid":1, "isprivate":false, "dmid":1, "users":[{"id":1}]}' -H "Content-Type: application/json" -H "Accept: application/json" -X POST localhost:8080/channels
 
     curl -d -H "Accept:application/json" -X GET localhost:8080/channels
 
     curl -d -H "Accept:application/json" -X GET localhost:8080/channels/1
 
-    curl -d -H "Accept:application/json" -X DELETE localhost:8080/channels/1
+    curl -X DELETE localhost:8080/channels/1
 
-    curl -d '{"name":"my name updated", "description":"my description updated", "ownerid":1, "isprivate":true, "dmid":1}' -H "Content-Type: application/json" -X PUT localhost:8080/channels/1
+    curl -d '{"name":"my name updated", "description":"my description updated", "ownerid":1, "isprivate":true, "dmid":1, "users":[{"id":1}]}' -H "Content-Type: application/json" -H "Accept: application/json" -X PUT localhost:8080/channels/1
