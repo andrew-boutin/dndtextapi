@@ -1,12 +1,12 @@
 # Contributing
 
-Check out [Design](docs/DESIGN.md) to learn how the existing stuff works.
+Set up the [prerequisites](docs/PREREQUISITES.md).
 
-Check out [Design plans](docs/DESIGNPLANS.md) to see what needs work.
+Check out [design](docs/DESIGN.md) to learn how the existing stuff works.
+
+Check out [design plans](docs/DESIGNPLANS.md) to see what needs work.
 
 Add yourself to [contributors](docs/CONTRIBUTORS.md) if you work on something.
-
-Set up the [prerequisites](docs/PREREQUISITES.md).
 
 ## Tech Stack
 

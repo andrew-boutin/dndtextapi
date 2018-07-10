@@ -115,13 +115,22 @@ func (backend Backend) CreateChannel(c *channels.Channel) (*channels.Channel, er
 		return nil, err
 	}
 
-	// TODO: Need to add Users before returning..?
 	err = backend.AddUsersToChannel(newChannel.ID, c.Users.GetUserIDs())
 
 	if err != nil {
 		log.WithError(err).Error("Issue adding user channel mappings.")
 		return nil, err
 	}
+
+	// Can only trust the User IDs provided so we want to return the
+	// actual User data in the response
+	actualUsers, err := backend.GetUsersInChannel(newChannel.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newChannel.Users = actualUsers
 
 	return newChannel, nil
 }
@@ -196,12 +205,22 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		return nil, err
 	}
 
-	// TODO: Need to add Users before returning..?
 	err = backend.AddUsersToChannel(id, c.Users.GetUserIDs())
+
+	if err != nil {
+		log.WithError(err).Error("Issue adding user channel mappings.")
+		return nil, err
+	}
+
+	// Can only trust the User IDs provided so we want to return the
+	// actual User data in the response
+	actualUsers, err := backend.GetUsersInChannel(id)
 
 	if err != nil {
 		return nil, err
 	}
+
+	updatedChannel.Users = actualUsers
 
 	return updatedChannel, nil
 }

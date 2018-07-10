@@ -17,6 +17,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
+- Full and partial user views from the different channel ops.
 
 ## Notes
 
