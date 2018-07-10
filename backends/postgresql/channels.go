@@ -1,6 +1,8 @@
 package postgresql
 
 import (
+	sqlP "database/sql"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/channels"
 	log "github.com/sirupsen/logrus"
@@ -40,6 +42,9 @@ func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 	err = backend.db.Get(channel, sql, args...)
 
 	if err != nil {
+		if err == sqlP.ErrNoRows {
+			return nil, channels.ErrChannelNotFound
+		}
 		return nil, err
 	}
 
@@ -138,8 +143,19 @@ func (backend Backend) DeleteChannel(id int) error {
 		return err
 	}
 
-	// TODO: Check result?
-	_, err = backend.db.Exec(sql, args...)
+	result, err := backend.db.Exec(sql, args...)
+	if err != nil {
+		return err
+	}
+
+	numRowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if numRowsAffected <= 0 {
+		return channels.ErrChannelNotFound
+	}
 
 	return err
 }
@@ -168,6 +184,9 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 	updatedChannel := &channels.Channel{}
 	err = backend.db.QueryRowx(sql, args...).StructScan(updatedChannel)
 	if err != nil {
+		if err == sqlP.ErrNoRows {
+			return nil, channels.ErrChannelNotFound
+		}
 		return nil, err
 	}
 

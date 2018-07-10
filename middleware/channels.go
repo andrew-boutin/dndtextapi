@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/andrew-boutin/dndtextapi/channels"
 
@@ -27,7 +26,7 @@ func GetChannels(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 	channels, err := dbBackend.GetChannels()
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, channels)
@@ -39,17 +38,22 @@ func GetChannel(c *gin.Context) {
 	// TODO: Anonymous users can get a public channel. Users who are authn
 	// can also get a private channel they're a member of.
 	dbBackend := GetDBBackend(c)
-	idParam := c.Param("id")
-	channelID, err := strconv.Atoi(idParam)
+	channelID, err := PathParamAsIntExtractor(c, "id")
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+
 	channel, err := dbBackend.GetChannel(channelID)
 	if err != nil {
-		c.Error(err)
+		if err == channels.ErrChannelNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, channel)
 }
 
@@ -63,14 +67,14 @@ func CreateChannel(c *gin.Context) {
 	err := c.Bind(channel)
 
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	createdChannel, err := dbBackend.CreateChannel(channel)
 
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -81,17 +85,20 @@ func CreateChannel(c *gin.Context) {
 func DeleteChannel(c *gin.Context) {
 	// TODO: Authn user must be owner
 	dbBackend := GetDBBackend(c)
-	idParam := c.Param("id")
-	channelID, err := strconv.Atoi(idParam)
+	channelID, err := PathParamAsIntExtractor(c, "id")
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	err = dbBackend.DeleteChannel(channelID)
 
 	if err != nil {
-		c.Error(err)
+		if err == channels.ErrChannelNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -103,10 +110,9 @@ func DeleteChannel(c *gin.Context) {
 func UpdateChannel(c *gin.Context) {
 	// TODO: Authn user must be owner
 	dbBackend := GetDBBackend(c)
-	idParam := c.Param("id")
-	channelID, err := strconv.Atoi(idParam)
+	channelID, err := PathParamAsIntExtractor(c, "id")
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -114,14 +120,18 @@ func UpdateChannel(c *gin.Context) {
 	err = c.Bind(channel)
 
 	if err != nil {
-		c.Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	updatedChannel, err := dbBackend.UpdateChannel(channelID, channel)
 
 	if err != nil {
-		c.Error(err)
+		if err == channels.ErrChannelNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
 
 	"github.com/andrew-boutin/dndtextapi/backends"
 	"github.com/gin-gonic/gin"
@@ -18,6 +20,17 @@ const (
 
 	// Other
 	applicationJSONHeaderVal = "application/json"
+)
+
+// Errors
+var (
+	// ErrParamNotInPath is the error to use when a parameter is expected but
+	// not found in the path.
+	ErrParamNotInPath = fmt.Errorf("expected path parameter not found")
+
+	// ErrParamNotInt is the error to use when a parameter in the path is
+	// expected to be an integer but isn't.
+	ErrParamNotInt = fmt.Errorf("expected path parameter to be an integer")
 )
 
 // RegisterMiddleware handles registering all common middleware
@@ -62,24 +75,56 @@ func RequiredHeadersMiddleware(expectedHeaders ...string) gin.HandlerFunc {
 			val := c.GetHeader(requiredHeader)
 			if len(val) <= 0 {
 				log.WithField("header", requiredHeader).Error("Missing required header.")
-				c.Error(fmt.Errorf("missing required header %s", requiredHeader))
+				c.AbortWithError(http.StatusBadRequest, c.Error(fmt.Errorf("missing required header %s", requiredHeader)))
 				return
 			}
 
 			switch requiredHeader {
 			case acceptHeader:
 				if val != applicationJSONHeaderVal {
+					// TODO: 415 Unsupported Media Type?
 					log.WithField(acceptHeader, val).Error("Invalid header value.")
-					c.Error(fmt.Errorf("invalid %s header value %s", acceptHeader, val))
+					c.AbortWithError(http.StatusBadRequest, c.Error(fmt.Errorf("invalid %s header value %s", acceptHeader, val)))
 					return
 				}
 			case contentTypeHeader:
 				if val != applicationJSONHeaderVal {
+					// TODO: 415 Unsupported Media Type?
 					log.WithField(contentTypeHeader, val).Error("Invalid header value.")
-					c.Error(fmt.Errorf("invalid %s header value %s", contentTypeHeader, val))
+					c.AbortWithError(http.StatusBadRequest, c.Error(fmt.Errorf("invalid %s header value %s", contentTypeHeader, val)))
 					return
 				}
 			}
 		}
 	}
+}
+
+// PathParamExtractor extracts a parameter from the gin.Context by using
+// the given name. If no parameter is found then an error is returned.
+func PathParamExtractor(c *gin.Context, name string) (string, error) {
+	p := c.Param(name)
+
+	if len(p) <= 0 {
+		return "", ErrParamNotInPath
+	}
+
+	return p, nil
+}
+
+// PathParamAsIntExtractor extracts a parameter from the gin.Context
+// by using the given name and returns it as an integer.
+func PathParamAsIntExtractor(c *gin.Context, name string) (int, error) {
+	pStr, err := PathParamExtractor(c, name)
+
+	if err != nil {
+		return 0, err
+	}
+
+	pInt, err := strconv.Atoi(pStr)
+
+	if err != nil {
+		return 0, ErrParamNotInt
+	}
+
+	return pInt, nil
 }

@@ -6,9 +6,9 @@ DnD Text API is a Golang REST API for a DnD style text adventure site.
 
     curl -d '{"name":"my name", "description":"my description", "ownerid":1, "isprivate":false, "dmid":1, "users":[{"id":1}]}' -H "Content-Type: application/json" -H "Accept: application/json" -X POST localhost:8080/channels
 
-    curl -d -H "Accept:application/json" -X GET localhost:8080/channels
+    curl -H "Accept: application/json" -X GET localhost:8080/channels
 
-    curl -d -H "Accept:application/json" -X GET localhost:8080/channels/1
+    curl -H "Accept: application/json" -X GET localhost:8080/channels/1
 
     curl -X DELETE localhost:8080/channels/1
 

@@ -1,10 +1,14 @@
 package channels
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/andrew-boutin/dndtextapi/users"
 )
+
+// ErrChannelNotFound is the error to use when the Channel is not found.
+var ErrChannelNotFound = fmt.Errorf("channel not found")
 
 // Channel contains all of the data for a channel
 type Channel struct {

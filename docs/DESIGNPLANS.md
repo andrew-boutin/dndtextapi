@@ -15,8 +15,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- One liner to abort context with new err and any previously defined errs. Current impl keeps rolling through the middleware stack.
-- Channel ops work w/ 0 users defined. Currently gives SQL error "no values defined".
+- Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
 
 ## Notes

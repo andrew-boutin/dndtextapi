@@ -58,6 +58,11 @@ func (backend Backend) GetUsersInChannel(id int) (users.UserCollection, error) {
 // AddUsersToChannel adds the given Users matching the input User IDs to the Channel
 // that matches the input Channel ID.
 func (backend Backend) AddUsersToChannel(channelID int, userIDs []int) error {
+	// Short circuit if there are no Users to add
+	if len(userIDs) <= 0 {
+		return nil
+	}
+
 	// TODO: unique constraint on channelid/userid
 	builder := PSQLBuilder().
 		Insert(channelsUsersTable).
