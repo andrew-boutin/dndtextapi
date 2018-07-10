@@ -7,10 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Configuration is the top level configuration data from
+// the config file.
 type Configuration struct {
 	Backend BackendConfiguration
 }
 
+// LoadConfig loads the config file into the configuration
+// objects and returns the top level configuration.
 func LoadConfig() (configuration Configuration) {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")

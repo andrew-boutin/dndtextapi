@@ -2,16 +2,24 @@
 
 Some of the stuff that still has to be done and notes about how to do some of it.
 
-- unit tests
-- functional tests
-- DB Migrations
-- Authn
-- Authz
+## Features
 
-Only accept application/json & look for header.
-Return content type application/json header.
-Links. Self links. Collection links.
-Swagger spec.
+- Functional tests
+- Transactions per route for rollbacks
+- DB Migrations - for CD
+- Authn definitely
+- Authz maybe (admin user)
+- Resource links: Self links. Collection links.
+- Swagger spec
+- Glide
+
+## Fix Ups
+
+- One liner to abort context with new err and any previously defined errs. Current impl keeps rolling through the middleware stack.
+- Channel ops work w/ 0 users defined. Currently gives SQL error "no values defined".
+- Missing unit tests. A single test file in each package should get code coverage to report accurately.
+
+## Notes
 
 Channel types. Single channel or multiple?
 Message types. DM, roll, player...

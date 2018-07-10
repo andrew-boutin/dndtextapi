@@ -22,7 +22,9 @@ var channelColumns = []string{
 	"dmid",
 }
 
-func (backend PostgresqlBackend) GetChannel(id int) (*channels.Channel, error) {
+// GetChannel retrieves the channel, with the users in the channel,
+// corresponding to the given id.
+func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
@@ -52,8 +54,9 @@ func (backend PostgresqlBackend) GetChannel(id int) (*channels.Channel, error) {
 	return channel, err
 }
 
-// TODO: Be able to filter on things such as private/not private
-func (backend PostgresqlBackend) GetChannels() (*channels.ChannelCollection, error) {
+// GetChannels returns partial views of all of the channels.
+func (backend Backend) GetChannels() (*channels.ChannelCollection, error) {
+	// TODO: Be able to filter on things such as private/not private
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
@@ -84,8 +87,10 @@ func (backend PostgresqlBackend) GetChannels() (*channels.ChannelCollection, err
 	return &outChannels, nil
 }
 
-// TODO: Don't require description, default isprivate to false
-func (backend PostgresqlBackend) CreateChannel(c *channels.Channel) (*channels.Channel, error) {
+// CreateChannel creates a new channel using the provided channel info
+// and returns the result from the database.
+func (backend Backend) CreateChannel(c *channels.Channel) (*channels.Channel, error) {
+	// TODO: Don't require description, default isprivate to false
 	sql, args, err := PSQLBuilder().
 		Insert(channelsTable).
 		Columns("name", "description", "ownerid", "isprivate", "dmid").
@@ -116,7 +121,8 @@ func (backend PostgresqlBackend) CreateChannel(c *channels.Channel) (*channels.C
 	return newChannel, nil
 }
 
-func (backend PostgresqlBackend) DeleteChannel(id int) error {
+// DeleteChannel deletes the channel that corresponds to the given ID.
+func (backend Backend) DeleteChannel(id int) error {
 	err := backend.RemoveUsersFromChannel(id)
 
 	if err != nil {
@@ -138,7 +144,9 @@ func (backend PostgresqlBackend) DeleteChannel(id int) error {
 	return err
 }
 
-func (backend PostgresqlBackend) UpdateChannel(id int, c *channels.Channel) (*channels.Channel, error) {
+// UpdateChannel updates the channel matching the given ID using the data
+// provided in the input channel. Returns the channel data from the database.
+func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Channel, error) {
 	setMap := map[string]interface{}{
 		"name":        c.Name,
 		"description": c.Description,

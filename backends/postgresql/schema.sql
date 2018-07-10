@@ -28,9 +28,16 @@ CREATE TABLE messages (
     id bigserial primary key,
     userid bigserial references users(id),
     content varchar(200) NOT NULL,
-    createdon timestamp default current_timestamp
+    createdon timestamp default current_timestamp,
+    lastupdated timestamp default current_timestamp
 );
 
+-- Use function provided from trigger.sql to handle updating lastmodified timestamps on updates
+CREATE TRIGGER users_updated_at_modtime BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+CREATE TRIGGER channels_updated_at_modtime BEFORE UPDATE ON channels FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+
+-- Sample data
 INSERT INTO users
 (name, bio) VALUES
 ('user1', 'my first user');

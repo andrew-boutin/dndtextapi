@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Backend defines the functionality expected of a backend.
 type Backend interface {
 	// Channels functionality
 	GetChannels() (*channels.ChannelCollection, error)
@@ -19,12 +20,14 @@ type Backend interface {
 	UpdateChannel(int, *channels.Channel) (*channels.Channel, error)
 }
 
+// InitBackend initializes whatever backend matches the provided
+// configuration and returns it.
 func InitBackend(backendConfig configs.BackendConfiguration) (backendDB Backend) {
 	log.Printf("backend config type is %s", backendConfig.Type)
 
 	switch backendConfig.Type {
 	case "postgres":
-		backendDB = postgresql.GetPostgresqlBackend(backendConfig.User, backendConfig.PW, backendConfig.DBName)
+		backendDB = postgresql.MakePostgresqlBackend(backendConfig.User, backendConfig.PW, backendConfig.DBName)
 	default:
 		log.Fatalf("Unexpected backend config type %s", backendConfig.Type)
 	}

@@ -20,7 +20,9 @@ var userColumns = []string{
 	"lastupdated",
 }
 
-func (backend PostgresqlBackend) GetUsersInChannel(id int) (users.UserCollection, error) {
+// GetUsersInChannel retrieves all Users that are in the Channel matching
+// the provided ID.
+func (backend Backend) GetUsersInChannel(id int) (users.UserCollection, error) {
 	sql, args, err := PSQLBuilder().
 		Select("id", "name", "bio", "users.createdon", "users.lastupdated").
 		From(usersTable).
@@ -53,8 +55,10 @@ func (backend PostgresqlBackend) GetUsersInChannel(id int) (users.UserCollection
 	return usersCollection, nil
 }
 
-// TODO: unique constraint on channelid/userid
-func (backend PostgresqlBackend) AddUsersToChannel(channelID int, userIDs []int) error {
+// AddUsersToChannel adds the given Users matching the input User IDs to the Channel
+// that matches the input Channel ID.
+func (backend Backend) AddUsersToChannel(channelID int, userIDs []int) error {
+	// TODO: unique constraint on channelid/userid
 	builder := PSQLBuilder().
 		Insert(channelsUsersTable).
 		Columns("channelid", "userid")
@@ -75,7 +79,9 @@ func (backend PostgresqlBackend) AddUsersToChannel(channelID int, userIDs []int)
 	return err
 }
 
-func (backend PostgresqlBackend) RemoveUsersFromChannel(id int) error {
+// RemoveUsersFromChannel removes all Users from the Channel that matches
+// the given ID.
+func (backend Backend) RemoveUsersFromChannel(id int) error {
 	sql, args, err := PSQLBuilder().
 		Delete(channelsUsersTable).
 		Where(sq.Eq{"channelid": id}).

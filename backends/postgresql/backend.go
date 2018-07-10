@@ -10,14 +10,20 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const schemaFilePath = "./backends/postgresql/schema.sql"
+const (
+	schemaFilePath  = "./backends/postgresql/schema.sql"
+	triggerFilePath = "./backends/postgresql/trigger.sql"
+)
 
-type PostgresqlBackend struct {
+// Backend contains all of the data specific to a Postgres backend
+type Backend struct {
 	db *sqlx.DB
 }
 
-// TODO: Should use transactions
-func GetPostgresqlBackend(user, password, dbname string) PostgresqlBackend {
+// MakePostgresqlBackend creates a Postgresql backend with connection to the
+// actual DB, verifies the connection, and initializes the schema if it
+// isn't already populated.
+func MakePostgresqlBackend(user, password, dbname string) Backend {
 	dbinfo := fmt.Sprintf("host=db user=%s password=%s dbname=%s sslmode=disable",
 		user, password, dbname)
 	db, err := sqlx.Open("postgres", dbinfo)
@@ -41,13 +47,17 @@ func GetPostgresqlBackend(user, password, dbname string) PostgresqlBackend {
 		initSchema(db)
 	}
 
-	return PostgresqlBackend{db: db}
+	return Backend{db: db}
 }
 
+// PSQLBuilder retruns a squirrel SQL builder that uses
+// placeholders in the format that Postgresql expects.
 func PSQLBuilder() sq.StatementBuilderType {
 	return sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 }
 
+// RunHealthCheck returns an error if there is an issue
+// connecting to the database.
 func RunHealthCheck(db *sqlx.DB) error {
 	err := db.Ping()
 	if err != nil {
@@ -56,8 +66,23 @@ func RunHealthCheck(db *sqlx.DB) error {
 	return err
 }
 
+// initSchema initializes the schema for the Postgresql database.
 func initSchema(db *sqlx.DB) {
-	file, err := ioutil.ReadFile(schemaFilePath)
+	// The function defined in triggerFilePath has multiple semi colons that
+	// are part of a single statement so it gets processed differently
+	// than the statements in the schema file
+	file, err := ioutil.ReadFile(triggerFilePath)
+
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec(string(file))
+	if err != nil {
+		panic(err)
+	}
+
+	file, err = ioutil.ReadFile(schemaFilePath)
 
 	if err != nil {
 		panic(err)

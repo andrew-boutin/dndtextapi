@@ -10,7 +10,7 @@ type User struct {
 	Bio         string
 	ID          int
 	CreatedOn   time.Time
-	LastUpdated time.Time // TODO: handle this
+	LastUpdated time.Time
 }
 
 // UserCollection is a slice of Users.
