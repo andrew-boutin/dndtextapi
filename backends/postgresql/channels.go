@@ -138,7 +138,11 @@ func (backend Backend) CreateChannel(c *channels.Channel) (*channels.Channel, er
 // DeleteChannel deletes the channel that corresponds to the given ID.
 func (backend Backend) DeleteChannel(id int) error {
 	err := backend.RemoveUsersFromChannel(id)
+	if err != nil {
+		return err
+	}
 
+	err = backend.DeleteMessagesFromChannel(id)
 	if err != nil {
 		return err
 	}
@@ -147,7 +151,6 @@ func (backend Backend) DeleteChannel(id int) error {
 		Delete(channelsTable).
 		Where(sq.Eq{"id": id}).
 		ToSql()
-
 	if err != nil {
 		return err
 	}
@@ -185,7 +188,6 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		Where(sq.Eq{"id": id}).
 		Suffix("RETURNING id, name, description, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
 		ToSql()
-
 	if err != nil {
 		return nil, err
 	}
@@ -200,13 +202,11 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 	}
 
 	err = backend.RemoveUsersFromChannel(id)
-
 	if err != nil {
 		return nil, err
 	}
 
 	err = backend.AddUsersToChannel(id, c.Users.GetUserIDs())
-
 	if err != nil {
 		log.WithError(err).Error("Issue adding user channel mappings.")
 		return nil, err
@@ -215,7 +215,6 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 	// Can only trust the User IDs provided so we want to return the
 	// actual User data in the response
 	actualUsers, err := backend.GetUsersInChannel(id)
-
 	if err != nil {
 		return nil, err
 	}

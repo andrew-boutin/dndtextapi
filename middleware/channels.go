@@ -11,6 +11,8 @@ import (
 // RegisterChannelsMiddleware registers all of the channel routes with their
 // associated middleware
 func RegisterChannelsMiddleware(r *gin.Engine) {
+	// TODO: Maybe don't include any user info in these calls and have that be separate
+	// under /channels/:channelID/users ...
 	r.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetChannels)
 	r.POST("/channels", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateChannel)
 	r.GET("/channels/:id", RequiredHeadersMiddleware(acceptHeader), GetChannel)
@@ -118,14 +120,12 @@ func UpdateChannel(c *gin.Context) {
 
 	channel := &channels.Channel{}
 	err = c.Bind(channel)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	updatedChannel, err := dbBackend.UpdateChannel(channelID, channel)
-
 	if err != nil {
 		if err == channels.ErrChannelNotFound {
 			c.AbortWithError(http.StatusNotFound, err)

@@ -27,6 +27,7 @@ CREATE TABLE channels_users (
 CREATE TABLE messages (
     id bigserial primary key,
     userid bigserial references users(id),
+    channelid bigserial references channels(id),
     content varchar(200) NOT NULL,
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
@@ -48,4 +49,9 @@ INSERT INTO channels
 
 INSERT INTO channels_users
 (channelid, userid) VALUES
-(1, 1)
+(1, 1);
+
+INSERT INTO messages
+(userid, channelid, content) VALUES
+(1, 1, 'message one'),
+(1, 1, 'messsage two');

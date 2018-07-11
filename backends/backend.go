@@ -3,6 +3,8 @@ package backends
 import (
 	"log"
 
+	"github.com/andrew-boutin/dndtextapi/messages"
+
 	"github.com/andrew-boutin/dndtextapi/backends/postgresql"
 	"github.com/andrew-boutin/dndtextapi/channels"
 	"github.com/andrew-boutin/dndtextapi/configs"
@@ -18,6 +20,13 @@ type Backend interface {
 	CreateChannel(*channels.Channel) (*channels.Channel, error)
 	DeleteChannel(int) error
 	UpdateChannel(int, *channels.Channel) (*channels.Channel, error)
+
+	// Messages functionality
+	GetMessagesInChannel(int) (*messages.MessageCollection, error)
+	GetMessage(int) (*messages.Message, error)
+	CreateMessage(*messages.Message) (*messages.Message, error)
+	DeleteMessage(int) error
+	UpdateMessage(int, *messages.Message) (*messages.Message, error)
 }
 
 // InitBackend initializes whatever backend matches the provided

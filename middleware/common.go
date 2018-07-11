@@ -24,31 +24,31 @@ const (
 
 // Errors
 var (
-	// ErrParamNotInPath is the error to use when a parameter is expected but
+	// ErrPathParamNotFound is the error to use when a parameter is expected but
 	// not found in the path.
-	ErrParamNotInPath = fmt.Errorf("expected path parameter not found")
+	ErrPathParamNotFound = fmt.Errorf("expected path parameter not found")
 
-	// ErrParamNotInt is the error to use when a parameter in the path is
+	// ErrPathParamNotInt is the error to use when a parameter in the path is
 	// expected to be an integer but isn't.
-	ErrParamNotInt = fmt.Errorf("expected path parameter to be an integer")
+	ErrPathParamNotInt = fmt.Errorf("expected path parameter to be an integer")
+
+	// ErrQueryParamNotFound is the error to use when a parameter is expected
+	// but not found in the query string.
+	ErrQueryParamNotFound = fmt.Errorf("expected query parameter not found")
+
+	// ErrQueryParamNotInt
+	ErrQueryParamNotInt = fmt.Errorf("expected query parameter to be an integer")
 )
 
 // RegisterMiddleware handles registering all common middleware
 // and registering all of the various route groups.
 func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
+	// TODO: Is it possible to register a middleware at the beginning of all PUT/GET etc. routes?
 	r.Use(ContextInjectionMiddleware(backend))
 
 	RegisterChannelsMiddleware(r)
 	// RegisterUsersMiddleware(r)
-	// RegisterMessagesMiddleware(r)
-
-	/*
-		Channels:
-		- Create: Authn users can create channels of type "group". A corresponding
-		  channel of type "output" is automatically created.
-		Messages: List, Get, Create, Update, Delete
-		Users: List, Get, Create, Update, Delete
-	*/
+	RegisterMessagesMiddleware(r)
 }
 
 // GetDBBackend pulls the db backend out of the context that
@@ -99,19 +99,19 @@ func RequiredHeadersMiddleware(expectedHeaders ...string) gin.HandlerFunc {
 	}
 }
 
-// PathParamExtractor extracts a parameter from the gin.Context by using
+// PathParamExtractor extracts a path parameter from the gin.Context by using
 // the given name. If no parameter is found then an error is returned.
 func PathParamExtractor(c *gin.Context, name string) (string, error) {
 	p := c.Param(name)
 
 	if len(p) <= 0 {
-		return "", ErrParamNotInPath
+		return "", ErrPathParamNotFound
 	}
 
 	return p, nil
 }
 
-// PathParamAsIntExtractor extracts a parameter from the gin.Context
+// PathParamAsIntExtractor extracts a path parameter from the gin.Context
 // by using the given name and returns it as an integer.
 func PathParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 	pStr, err := PathParamExtractor(c, name)
@@ -123,7 +123,37 @@ func PathParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 	pInt, err := strconv.Atoi(pStr)
 
 	if err != nil {
-		return 0, ErrParamNotInt
+		return 0, ErrPathParamNotInt
+	}
+
+	return pInt, nil
+}
+
+// QueryParamExtractor extracts a query parameter from the gin.Context by using
+// the given name. If no parameter is found then an error is returned.
+func QueryParamExtractor(c *gin.Context, name string) (string, error) {
+	p := c.Query(name)
+
+	if p == "" {
+		return "", ErrQueryParamNotFound
+	}
+
+	return p, nil
+}
+
+// QueryParamAsIntExtractor extracts a query parameter from the gin.Context
+// by using the given name and returns it as an integer.
+func QueryParamAsIntExtractor(c *gin.Context, name string) (int, error) {
+	pStr, err := QueryParamExtractor(c, name)
+
+	if err != nil {
+		return 0, err
+	}
+
+	pInt, err := strconv.Atoi(pStr)
+
+	if err != nil {
+		return 0, ErrQueryParamNotInt
 	}
 
 	return pInt, nil
