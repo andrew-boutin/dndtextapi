@@ -1,6 +1,7 @@
 CREATE TABLE users (
     id bigserial primary key,
-    name varchar(30) NOT NULL,
+    username varchar(30) NOT NULL,
+    email varchar(30) NOT NULL,
     bio varchar(200) NOT NULL,
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
@@ -29,6 +30,7 @@ CREATE TABLE messages (
     userid bigserial references users(id),
     channelid bigserial references channels(id),
     content varchar(200) NOT NULL,
+    isstory boolean NOT NULL,
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
 );
@@ -40,8 +42,8 @@ CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH RO
 
 -- Sample data
 INSERT INTO users
-(name, bio) VALUES
-('user1', 'my first user');
+(username, email, bio) VALUES
+('user1', 'my@email.com', 'my first user');
 
 INSERT INTO channels
 (ownerid, dmid, name, description, isprivate) VALUES
@@ -52,6 +54,6 @@ INSERT INTO channels_users
 (1, 1);
 
 INSERT INTO messages
-(userid, channelid, content) VALUES
-(1, 1, 'message one'),
-(1, 1, 'messsage two');
+(userid, channelid, content, type) VALUES
+(1, 1, 'message one story', 'story'),
+(1, 1, 'messsage two meta', 'meta');

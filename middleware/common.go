@@ -20,6 +20,23 @@ const (
 
 	// Other
 	applicationJSONHeaderVal = "application/json"
+
+	idPathParam = "id"
+)
+
+// Query parameters and their valid values
+const (
+	channelIDQueryParam = "channelID"
+
+	// msgTypeQueryParam can be `story` or `meta`.
+	msgTypeQueryParam = "msgType"
+	metaMsgType       = "meta"
+	storyMsgType      = "story"
+
+	// levelQueryParam can be `member` or `owner`.
+	levelQueryParam = "level"
+	ownerLevel      = "owner"
+	memberLevel     = "member"
 )
 
 // Errors
@@ -46,8 +63,11 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	// TODO: Is it possible to register a middleware at the beginning of all PUT/GET etc. routes?
 	r.Use(ContextInjectionMiddleware(backend))
 
+	// TODO: Anonymous routes
+
+	// TODO: Requires authn
 	RegisterChannelsMiddleware(r)
-	// RegisterUsersMiddleware(r)
+	RegisterUsersMiddleware(r)
 	RegisterMessagesMiddleware(r)
 }
 
@@ -130,7 +150,7 @@ func PathParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 }
 
 // QueryParamExtractor extracts a query parameter from the gin.Context by using
-// the given name. If no parameter is found then an error is returned.
+// the given name.
 func QueryParamExtractor(c *gin.Context, name string) (string, error) {
 	p := c.Query(name)
 
@@ -157,4 +177,9 @@ func QueryParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 	}
 
 	return pInt, nil
+}
+
+// GetAuthenticatedUserID TODO: Need to implement authentication
+func GetAuthenticatedUserID() int {
+	return 1
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/andrew-boutin/dndtextapi/messages"
+	"github.com/andrew-boutin/dndtextapi/users"
 
 	"github.com/andrew-boutin/dndtextapi/backends/postgresql"
 	"github.com/andrew-boutin/dndtextapi/channels"
@@ -15,18 +16,25 @@ import (
 // Backend defines the functionality expected of a backend.
 type Backend interface {
 	// Channels functionality
-	GetChannels() (*channels.ChannelCollection, error)
 	GetChannel(int) (*channels.Channel, error)
-	CreateChannel(*channels.Channel) (*channels.Channel, error)
+	GetChannelsOwnedByUser(int) (*channels.ChannelCollection, error)
+	GetChannelsUserIsMember(int, *bool) (*channels.ChannelCollection, error)
+	GetAllChannels(*bool) (*channels.ChannelCollection, error)
+	CreateChannel(*channels.Channel, int) (*channels.Channel, error)
 	DeleteChannel(int) error
 	UpdateChannel(int, *channels.Channel) (*channels.Channel, error)
 
 	// Messages functionality
-	GetMessagesInChannel(int) (*messages.MessageCollection, error)
+	GetMessagesInChannel(int, *bool) (*messages.MessageCollection, error)
 	GetMessage(int) (*messages.Message, error)
 	CreateMessage(*messages.Message) (*messages.Message, error)
 	DeleteMessage(int) error
 	UpdateMessage(int, *messages.Message) (*messages.Message, error)
+
+	// Users functionality
+	GetUsersInChannel(int) (users.UserCollection, error)
+	IsUserInChannel(int, int) (bool, error)
+	AddUserToChannel(int, int) error
 }
 
 // InitBackend initializes whatever backend matches the provided

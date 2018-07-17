@@ -3,6 +3,8 @@ package postgresql
 import (
 	"fmt"
 
+	sqlP "database/sql"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/users"
 	log "github.com/sirupsen/logrus"
@@ -14,7 +16,8 @@ const (
 
 var userColumns = []string{
 	"id",
-	"name",
+	"username",
+	"email",
 	"bio",
 	"createdon",
 	"lastupdated",
@@ -24,7 +27,7 @@ var userColumns = []string{
 // the provided ID.
 func (backend Backend) GetUsersInChannel(id int) (users.UserCollection, error) {
 	sql, args, err := PSQLBuilder().
-		Select("id", "name", "bio", "users.createdon", "users.lastupdated").
+		Select("id", "username", "email", "bio", "users.createdon", "users.lastupdated").
 		From(usersTable).
 		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, usersTable, channelsUsersTable)). // TODO: Is this an inner join?
 		Where(sq.Eq{"channelid": id}).
@@ -84,9 +87,9 @@ func (backend Backend) AddUsersToChannel(channelID int, userIDs []int) error {
 	return err
 }
 
-// RemoveUsersFromChannel removes all Users from the Channel that matches
+// RemoveAllUsersFromChannel removes all Users from the Channel that matches
 // the given ID.
-func (backend Backend) RemoveUsersFromChannel(id int) error {
+func (backend Backend) RemoveAllUsersFromChannel(id int) error {
 	sql, args, err := PSQLBuilder().
 		Delete(channelsUsersTable).
 		Where(sq.Eq{"channelid": id}).
@@ -97,6 +100,47 @@ func (backend Backend) RemoveUsersFromChannel(id int) error {
 	}
 
 	// TODO: Check result?
+	_, err = backend.db.Exec(sql, args...)
+	return err
+}
+
+// IsUserInChannel determines if the given User is a member of the given Channel.
+func (backend Backend) IsUserInChannel(userID, channelID int) (bool, error) {
+	sql, args, err := PSQLBuilder().
+		Select("1").
+		From(channelsUsersTable).
+		Where(sq.Eq{"channelid": channelID}).
+		Where(sq.Eq{"userid": userID}).
+		ToSql()
+	if err != nil {
+		return false, err
+	}
+
+	// TODO: Move out into own function
+	// Inspiration https://snippets.aktagon.com/snippets/756-checking-if-a-row-exists-in-go-database-sql-and-sqlx-
+	sql = fmt.Sprintf("select exists(%s)", sql)
+
+	var exists bool
+	err = backend.db.QueryRow(sql, args...).Scan(&exists)
+	if err != nil && err != sqlP.ErrNoRows {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+// AddUserToChannel adds the given User to the given Channel
+func (backend Backend) AddUserToChannel(userID, channelID int) error {
+	sql, args, err := PSQLBuilder().
+		Insert(channelsUsersTable).
+		Columns("userid", "channelid").
+		Values(userID, channelID).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Check value
 	_, err = backend.db.Exec(sql, args...)
 	return err
 }

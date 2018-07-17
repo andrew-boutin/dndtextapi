@@ -11,8 +11,6 @@ import (
 // RegisterChannelsMiddleware registers all of the channel routes with their
 // associated middleware
 func RegisterChannelsMiddleware(r *gin.Engine) {
-	// TODO: Maybe don't include any user info in these calls and have that be separate
-	// under /channels/:channelID/users ...
 	r.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetChannels)
 	r.POST("/channels", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateChannel)
 	r.GET("/channels/:id", RequiredHeadersMiddleware(acceptHeader), GetChannel)
@@ -20,13 +18,50 @@ func RegisterChannelsMiddleware(r *gin.Engine) {
 	r.DELETE("/channels/:id", DeleteChannel)
 }
 
-// GetChannels retrieves a list of all channels. The channels returned
-// are partial views.
+// GetChannels retrieves a list of Channels that the authenticated User has access
+// to. An optional query parameter `level` can be used to filter Channels by if
+// the User is a `member` or `owner`.
+// TODO: What about query param visibility=public|private?
 func GetChannels(c *gin.Context) {
-	// TODO: Anonymous users can get a list of public channels. Users who are authn
-	// can also see private channels they're a member of.
+	userID := GetAuthenticatedUserID()
 	dbBackend := GetDBBackend(c)
-	channels, err := dbBackend.GetChannels()
+
+	// Check for the optional query parameter
+	level, err := QueryParamExtractor(c, levelQueryParam)
+	if err != nil {
+		// Query parameter is optional here so ignore not found error
+		if err != ErrQueryParamNotFound {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+	}
+
+	// Get the Channels dependent on the query parameter
+	var channels *channels.ChannelCollection
+	switch level {
+	case ownerLevel:
+		channels, err = dbBackend.GetChannelsOwnedByUser(userID)
+	case memberLevel:
+		channels, err = dbBackend.GetChannelsUserIsMember(userID, nil)
+	default:
+		isPrivate := false
+		publicChannels, err := dbBackend.GetAllChannels(&isPrivate)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		isPrivate = true
+		privateMemberChannels, err := dbBackend.GetChannelsUserIsMember(userID, &isPrivate)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		usersChannels := append(*publicChannels, *privateMemberChannels...)
+		channels = &usersChannels
+	}
+
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -34,13 +69,12 @@ func GetChannels(c *gin.Context) {
 	c.JSON(http.StatusOK, channels)
 }
 
-// GetChannel retrieves a single channel with all of its data by using
-// an id in the request path.
+// GetChannel retrieves a single Channel by using an id in the request path.
 func GetChannel(c *gin.Context) {
-	// TODO: Anonymous users can get a public channel. Users who are authn
-	// can also get a private channel they're a member of.
+	userID := GetAuthenticatedUserID()
 	dbBackend := GetDBBackend(c)
-	channelID, err := PathParamAsIntExtractor(c, "id")
+
+	channelID, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -56,25 +90,49 @@ func GetChannel(c *gin.Context) {
 		return
 	}
 
+	// Private Channels require that the User is a member to access
+	if channel.IsPrivate == true {
+		userInChannel, err := dbBackend.IsUserInChannel(userID, channelID)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		// User not a member of the Channel so deny access
+		if !userInChannel {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, channel)
 }
 
 // CreateChannel creates a new channel using the data provided
 // in the request body.
 func CreateChannel(c *gin.Context) {
-	// TODO: User must be authn
-	// TODO: Validation. Name not empty etc.
+	// TODO: Validation. Name not empty, can't set ID/OwnerID, etc.
+	userID := GetAuthenticatedUserID()
 	dbBackend := GetDBBackend(c)
+
 	channel := &channels.Channel{}
 	err := c.Bind(channel)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	createdChannel, err := dbBackend.CreateChannel(channel)
+	// Set the authenticated User as the Channel owner
+	channel.OwnerID = userID
 
+	createdChannel, err := dbBackend.CreateChannel(channel, userID)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Add the authenticated User as a Channel member
+	err = dbBackend.AddUserToChannel(userID, createdChannel.ID)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -85,21 +143,33 @@ func CreateChannel(c *gin.Context) {
 
 // DeleteChannel deletes the channel using the id from the request path.
 func DeleteChannel(c *gin.Context) {
-	// TODO: Authn user must be owner
+	userID := GetAuthenticatedUserID()
 	dbBackend := GetDBBackend(c)
-	channelID, err := PathParamAsIntExtractor(c, "id")
+
+	channelID, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	err = dbBackend.DeleteChannel(channelID)
-
+	existingChannel, err := dbBackend.GetChannel(channelID)
 	if err != nil {
 		if err == channels.ErrChannelNotFound {
 			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// User must be the owner of the Channel in order to delete
+	if existingChannel.OwnerID != userID {
+		c.AbortWithError(http.StatusUnauthorized, err)
+		return
+	}
+
+	err = dbBackend.DeleteChannel(channelID)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -110,9 +180,11 @@ func DeleteChannel(c *gin.Context) {
 // UpdateChannel updates the specified channel from the id in the request
 // path using the data in the request body.
 func UpdateChannel(c *gin.Context) {
-	// TODO: Authn user must be owner
+	// TODO: Validation. Name not empty, can't set ID/OwnerID, etc.
+	userID := GetAuthenticatedUserID()
 	dbBackend := GetDBBackend(c)
-	channelID, err := PathParamAsIntExtractor(c, "id")
+
+	channelID, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -125,12 +197,24 @@ func UpdateChannel(c *gin.Context) {
 		return
 	}
 
-	updatedChannel, err := dbBackend.UpdateChannel(channelID, channel)
+	existingChannel, err := dbBackend.GetChannel(channelID)
 	if err != nil {
 		if err == channels.ErrChannelNotFound {
 			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// User must be the owner of the Channel in order to update
+	if existingChannel.OwnerID != userID {
+		c.AbortWithError(http.StatusUnauthorized, err)
+		return
+	}
+
+	updatedChannel, err := dbBackend.UpdateChannel(channelID, channel)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

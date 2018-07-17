@@ -74,4 +74,8 @@ curl -X DELETE localhost:8080/messages/1
 
 # Update Message PUT /messages/id
 curl -d '{"content":"some updated content"}' -H "Content-Type: application/json" -H "Accept: application/json" -X PUT localhost:8080/messages/1
+
+# -- Users --
+# Get Users for Channel GET /users?channelID=id
+curl -H "Accept: application/json" -X GET localhost:8080/users?channelID=1
 ```

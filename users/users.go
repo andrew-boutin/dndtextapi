@@ -6,7 +6,8 @@ import (
 
 // User holds User info
 type User struct {
-	Name        string
+	Username    string
+	Email       string
 	Bio         string
 	ID          int
 	CreatedOn   time.Time

@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	sqlP "database/sql"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/channels"
@@ -24,8 +25,7 @@ var channelColumns = []string{
 	"dmid",
 }
 
-// GetChannel retrieves the channel, with the users in the channel,
-// corresponding to the given id.
+// GetChannel retrieves the channel corresponding to the given id.
 func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
@@ -48,29 +48,59 @@ func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 		return nil, err
 	}
 
-	// TODO: Maybe partial users instead of full users
-	users, err := backend.GetUsersInChannel(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	channel.Users = users
 	return channel, err
 }
 
-// GetChannels returns partial views of all of the channels.
-func (backend Backend) GetChannels() (*channels.ChannelCollection, error) {
-	// TODO: Be able to filter on things such as private/not private
+// GetChannelsOwnedByUser retrieves all of the Channels where the provided User ID
+// is the owner of the Channel.
+func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelCollection, error) {
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
+		Where(sq.Eq{"owner": userID}).
 		ToSql()
 
 	if err != nil {
 		return nil, err
 	}
 
+	return backend.runMultiChannelQuery(sql, args)
+}
+
+// GetChannelsUserIsMember retrieves all of the Channels that the User, matching the provided
+// Usr ID, is a member of. This means every result in the Channel/User mapping table.
+// TODO: Could make a ChannelSearchStruct and put `isPrivate *bool`` in that
+func (backend Backend) GetChannelsUserIsMember(userID int, isPrivate *bool) (*channels.ChannelCollection, error) {
+	sql, args, err := PSQLBuilder().
+		Select(channelColumns...).
+		From(channelsTable).
+		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, channelsTable, channelsUsersTable)). // TODO: Is this an inner join?
+		Where(sq.Eq{"userid": userID}).
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return backend.runMultiChannelQuery(sql, args)
+}
+
+// GetAllChannels returns a list of all Channels if the isPrivate flag is nil. If the flag is set then only
+// private Channels are returned. If the flag is not set then only public Channels are returned.
+func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollection, error) {
+	// TODO: Nil isPrivate = no Where, true means only private channels, false means only public channels
+	sql, args, err := PSQLBuilder().
+		Select(channelColumns...).
+		From(channelsTable).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return backend.runMultiChannelQuery(sql, args)
+}
+
+func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (*channels.ChannelCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
 
 	if err != nil {
@@ -94,7 +124,7 @@ func (backend Backend) GetChannels() (*channels.ChannelCollection, error) {
 
 // CreateChannel creates a new channel using the provided channel info
 // and returns the result from the database.
-func (backend Backend) CreateChannel(c *channels.Channel) (*channels.Channel, error) {
+func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels.Channel, error) {
 	// TODO: Don't require description, default isprivate to false
 	sql, args, err := PSQLBuilder().
 		Insert(channelsTable).
@@ -115,33 +145,18 @@ func (backend Backend) CreateChannel(c *channels.Channel) (*channels.Channel, er
 		return nil, err
 	}
 
-	err = backend.AddUsersToChannel(newChannel.ID, c.Users.GetUserIDs())
-
-	if err != nil {
-		log.WithError(err).Error("Issue adding user channel mappings.")
-		return nil, err
-	}
-
-	// Can only trust the User IDs provided so we want to return the
-	// actual User data in the response
-	actualUsers, err := backend.GetUsersInChannel(newChannel.ID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	newChannel.Users = actualUsers
-
 	return newChannel, nil
 }
 
 // DeleteChannel deletes the channel that corresponds to the given ID.
 func (backend Backend) DeleteChannel(id int) error {
-	err := backend.RemoveUsersFromChannel(id)
+	// TODO: Potentially leave this up to the caller to do beforehand
+	err := backend.RemoveAllUsersFromChannel(id)
 	if err != nil {
 		return err
 	}
 
+	// TODO: Potentially leave this up to the caller to do beforehand
 	err = backend.DeleteMessagesFromChannel(id)
 	if err != nil {
 		return err
@@ -200,26 +215,6 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		}
 		return nil, err
 	}
-
-	err = backend.RemoveUsersFromChannel(id)
-	if err != nil {
-		return nil, err
-	}
-
-	err = backend.AddUsersToChannel(id, c.Users.GetUserIDs())
-	if err != nil {
-		log.WithError(err).Error("Issue adding user channel mappings.")
-		return nil, err
-	}
-
-	// Can only trust the User IDs provided so we want to return the
-	// actual User data in the response
-	actualUsers, err := backend.GetUsersInChannel(id)
-	if err != nil {
-		return nil, err
-	}
-
-	updatedChannel.Users = actualUsers
 
 	return updatedChannel, nil
 }

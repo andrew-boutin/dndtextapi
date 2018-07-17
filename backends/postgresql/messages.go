@@ -15,25 +15,31 @@ var messageColumns = []string{
 	"userid",
 	"channelid",
 	"content",
+	"isstory",
 	"createdon",
 	"lastupdated",
 }
 
-// GetMessagesInChannel retrieves all of the messages in the database
-// for the given Channel by ID.
-func (backend Backend) GetMessagesInChannel(channelID int) (*messages.MessageCollection, error) {
-	sql, args, err := PSQLBuilder().
+// GetMessagesInChannel retrieves all of the Messages in the database
+// for the given Channel by ID. If onlyStory is nil then both msgType are returned.
+// If onlyStory is set then only story Messages are returned. Otherwise only meta
+// Messages are retrieved.
+func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (*messages.MessageCollection, error) {
+	builder := PSQLBuilder().
 		Select(messageColumns...).
 		From(messagesTable).
-		Where(sq.Eq{"channelid": channelID}).
-		ToSql()
+		Where(sq.Eq{"channelid": channelID})
 
+	if onlyStory != nil {
+		builder = builder.Where(sq.Eq{"isstory": *onlyStory})
+	}
+
+	sql, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
 
 	rows, err := backend.db.Queryx(sql, args...)
-
 	if err != nil {
 		return nil, err
 	}
@@ -59,9 +65,8 @@ func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, er
 		Insert(messagesTable).
 		Columns("userid", "channelid", "content").
 		Values(m.UserID, m.ChannelID, m.Content).
-		Suffix("RETURNING id, userid, channelid, content, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, userid, channelid, content, type, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
-
 	if err != nil {
 		log.WithError(err).Error("Issue building create message sql.")
 		return nil, err
@@ -91,7 +96,6 @@ func (backend Backend) GetMessage(id int) (*messages.Message, error) {
 
 	message := &messages.Message{}
 	err = backend.db.Get(message, sql, args...)
-
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, messages.ErrMessageNotFound
@@ -155,7 +159,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		Update(messagesTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, userid, channelid, content, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, userid, channelid, content, type, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err

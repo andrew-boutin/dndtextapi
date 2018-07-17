@@ -14,6 +14,7 @@ type Message struct {
 	Content     string
 	UserID      int
 	ChannelID   int
+	IsStory     bool
 	CreatedOn   time.Time
 	LastUpdated time.Time
 }
