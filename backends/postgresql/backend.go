@@ -1,10 +1,13 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package postgresql
 
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -38,7 +41,6 @@ func MakePostgresqlBackend(user, password, dbname string) Backend {
 	}
 
 	rows, err := db.Queryx("SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';")
-
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +74,6 @@ func initSchema(db *sqlx.DB) {
 	// are part of a single statement so it gets processed differently
 	// than the statements in the schema file
 	file, err := ioutil.ReadFile(triggerFilePath)
-
 	if err != nil {
 		panic(err)
 	}
@@ -83,15 +84,13 @@ func initSchema(db *sqlx.DB) {
 	}
 
 	file, err = ioutil.ReadFile(schemaFilePath)
-
 	if err != nil {
 		panic(err)
 	}
 
 	requests := strings.Split(string(file), ";")
-
 	for _, request := range requests {
-		_, err := db.Exec(request)
+		_, err = db.Exec(request)
 		if err != nil {
 			panic(err)
 		}

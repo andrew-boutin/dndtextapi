@@ -1,3 +1,5 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package main
 
 import (
@@ -13,6 +15,9 @@ func main() {
 
 	// Initialize backend
 	backend := backends.InitBackend(configuration.Backend)
+
+	// Initalize authentication data
+	middleware.InitAuthentication(configuration.Client)
 
 	// Set up server
 	r := gin.Default()

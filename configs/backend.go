@@ -1,3 +1,5 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package configs
 
 // BackendConfiguration holds the backend configuration data

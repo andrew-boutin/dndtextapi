@@ -1,20 +1,24 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package middleware
 
 import (
 	"net/http"
 
+	"github.com/andrew-boutin/dndtextapi/channels"
+
 	"github.com/andrew-boutin/dndtextapi/messages"
 	"github.com/gin-gonic/gin"
 )
 
-// RegisterMessagesMiddleware registers all of the Message routes with their
+// RegisterMessagesRoutes registers all of the Message routes with their
 // associated middleware.
-func RegisterMessagesMiddleware(r *gin.Engine) {
-	r.GET("/messages", RequiredHeadersMiddleware(acceptHeader), GetMessages)
-	r.POST("/messages", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateMessage)
-	r.GET("/messages/:id", RequiredHeadersMiddleware(acceptHeader), GetMessage)
-	r.PUT("/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateMessage)
-	r.DELETE("/messages/:id", DeleteMessage)
+func RegisterMessagesRoutes(g *gin.RouterGroup) {
+	g.GET("/messages", RequiredHeadersMiddleware(acceptHeader), GetMessages)
+	g.POST("/messages", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateMessage)
+	g.GET("/messages/:id", RequiredHeadersMiddleware(acceptHeader), GetMessage)
+	g.PUT("/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateMessage)
+	g.DELETE("/messages/:id", DeleteMessage)
 }
 
 // GetMessages retrieves a list of Messages. The query parameter channelID is
@@ -22,7 +26,7 @@ func RegisterMessagesMiddleware(r *gin.Engine) {
 // parameter msgType is optional and can be used to filter which Messages are
 // retrieved.
 func GetMessages(c *gin.Context) {
-	userID := GetAuthenticatedUserID()
+	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
 	channelID, err := QueryParamAsIntExtractor(c, channelIDQueryParam)
@@ -50,8 +54,9 @@ func GetMessages(c *gin.Context) {
 
 	// Private Channels require that the User be a member to access any Messages
 	// Accessing any meta Messages on public Channels also requires membership
+	var isMember bool
 	if existingChannel.IsPrivate || msgType != storyMsgType {
-		isMember, err := dbBackend.IsUserInChannel(userID, channelID)
+		isMember, err = dbBackend.IsUserInChannel(user.ID, channelID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -87,7 +92,7 @@ func GetMessages(c *gin.Context) {
 // GetMessage retrieves a single Message using the Message ID
 // in the path.
 func GetMessage(c *gin.Context) {
-	userID := GetAuthenticatedUserID()
+	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
 	messageID, err := PathParamAsIntExtractor(c, idPathParam)
@@ -114,8 +119,9 @@ func GetMessage(c *gin.Context) {
 
 	// Private Channels and meta Messages in public Channels require
 	// that the User is a member
+	var isMember bool
 	if channel.IsPrivate || !message.IsStory {
-		isMember, err := dbBackend.IsUserInChannel(userID, channel.ID)
+		isMember, err = dbBackend.IsUserInChannel(user.ID, channel.ID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -134,7 +140,7 @@ func GetMessage(c *gin.Context) {
 // CreateMessage creates a new Message using the data in the
 // request body.
 func CreateMessage(c *gin.Context) {
-	userID := GetAuthenticatedUserID()
+	user := GetAuthenticatedUser(c)
 	// TODO: Validation - content not empty, etc.
 	dbBackend := GetDBBackend(c)
 	message := &messages.Message{}
@@ -145,7 +151,7 @@ func CreateMessage(c *gin.Context) {
 	}
 
 	// Verify that the User is a member of the Channel
-	isMember, err := dbBackend.IsUserInChannel(userID, message.ChannelID)
+	isMember, err := dbBackend.IsUserInChannel(user.ID, message.ChannelID)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -156,7 +162,7 @@ func CreateMessage(c *gin.Context) {
 		return
 	}
 
-	message.UserID = userID
+	message.UserID = user.ID
 
 	createdMessage, err := dbBackend.CreateMessage(message)
 	if err != nil {
@@ -169,7 +175,7 @@ func CreateMessage(c *gin.Context) {
 
 // DeleteMessage deletes the message matching the ID in the path.
 func DeleteMessage(c *gin.Context) {
-	userID := GetAuthenticatedUserID()
+	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
 	messageID, err := PathParamAsIntExtractor(c, idPathParam)
@@ -190,15 +196,16 @@ func DeleteMessage(c *gin.Context) {
 
 	// User must either have created the Message or be the Channel owner
 	// to delete the Message
-	if message.UserID != userID {
-		channel, err := dbBackend.GetChannel(message.ChannelID)
+	var channel *channels.Channel
+	if message.UserID != user.ID {
+		channel, err = dbBackend.GetChannel(message.ChannelID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 		// User didn't create the Message and isn't the Channel owner so deny access
-		if channel.OwnerID != userID {
+		if channel.OwnerID != user.ID {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -216,7 +223,7 @@ func DeleteMessage(c *gin.Context) {
 // UpdateMessage updates the Message using the ID from the path with
 // the data from the request body.
 func UpdateMessage(c *gin.Context) {
-	userID := GetAuthenticatedUserID()
+	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
 	messageID, err := PathParamAsIntExtractor(c, idPathParam)
@@ -236,7 +243,7 @@ func UpdateMessage(c *gin.Context) {
 	}
 
 	// The User must have created the Message in order to update it
-	if existingMessage.UserID != userID {
+	if existingMessage.UserID != user.ID {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}

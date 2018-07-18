@@ -1,3 +1,5 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package postgresql
 
 import (
@@ -25,6 +27,13 @@ var channelColumns = []string{
 	"dmid",
 }
 
+func init() {
+	// Add the Channel table name in front of the columms to avoid ambigious references.
+	for i, col := range channelColumns {
+		channelColumns[i] = fmt.Sprintf("%s.%s", channelsTable, col)
+	}
+}
+
 // GetChannel retrieves the channel corresponding to the given id.
 func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 	sql, args, err := PSQLBuilder().
@@ -33,14 +42,12 @@ func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 		Where(sq.Eq{"id": id}).
 		Limit(1).
 		ToSql()
-
 	if err != nil {
 		return nil, err
 	}
 
 	channel := &channels.Channel{}
 	err = backend.db.Get(channel, sql, args...)
-
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, channels.ErrChannelNotFound
@@ -59,7 +66,6 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelColl
 		From(channelsTable).
 		Where(sq.Eq{"owner": userID}).
 		ToSql()
-
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +77,17 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelColl
 // Usr ID, is a member of. This means every result in the Channel/User mapping table.
 // TODO: Could make a ChannelSearchStruct and put `isPrivate *bool`` in that
 func (backend Backend) GetChannelsUserIsMember(userID int, isPrivate *bool) (*channels.ChannelCollection, error) {
-	sql, args, err := PSQLBuilder().
+	builder := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
 		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, channelsTable, channelsUsersTable)). // TODO: Is this an inner join?
-		Where(sq.Eq{"userid": userID}).
-		ToSql()
+		Where(sq.Eq{"userid": userID})
 
+	if isPrivate != nil {
+		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
+	}
+
+	sql, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +112,6 @@ func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollect
 
 func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (*channels.ChannelCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
-
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +120,6 @@ func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (*ch
 	for rows.Next() {
 		var channel channels.Channel
 		err = rows.StructScan(&channel)
-
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +140,6 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 		Values(c.Name, c.Description, c.OwnerID, c.IsPrivate, c.DMID).
 		Suffix("RETURNING id, name, description, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
 		ToSql()
-
 	if err != nil {
 		log.WithError(err).Error("Issue building create channel sql.")
 		return nil, err

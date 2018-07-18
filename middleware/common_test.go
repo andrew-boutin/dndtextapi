@@ -1,6 +1,10 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package middleware
 
 import (
+	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -49,6 +53,56 @@ func TestPathParamExtractor(t *testing.T) {
 			}
 
 			str, err := PathParamExtractor(c, "id")
+
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expected, str)
+		})
+	}
+}
+
+func TestQueryParamExtractor(t *testing.T) {
+	testIO := []struct {
+		desc          string
+		queryParamSet bool
+		queryParam    string
+		expected      string
+		expectedErr   error
+	}{
+		{
+			desc:          "Valid query parameter.",
+			queryParamSet: true,
+			queryParam:    "id=1",
+			expected:      "1",
+			expectedErr:   nil,
+		},
+		{
+			desc:          "Other query parameter set.",
+			queryParamSet: true,
+			queryParam:    "random=1",
+			expected:      "",
+			expectedErr:   ErrQueryParamNotFound,
+		},
+		{
+			desc:          "No query parameter provided.",
+			queryParamSet: false,
+			queryParam:    "",
+			expected:      "",
+			expectedErr:   ErrQueryParamNotFound,
+		},
+	}
+
+	for _, test := range testIO {
+		t.Run(test.desc, func(t *testing.T) {
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			url := "http://localhost:8080"
+
+			if test.queryParamSet {
+				url += fmt.Sprintf("?%s", test.queryParam)
+			}
+
+			c.Request, _ = http.NewRequest("GET", fmt.Sprintf("http://localhost:8080?%s", test.queryParam), nil)
+
+			str, err := QueryParamExtractor(c, "id")
 
 			assert.Equal(t, test.expectedErr, err)
 			assert.Equal(t, test.expected, str)

@@ -20,6 +20,8 @@ Make for commands. See [`Makefile`](Makefile).
 
 ## Running
 
+Running anything outside of Docker, such as unit tests, will require running `govendor install +local` first.
+
 Start or stop the db and server:
 
     make up

@@ -1,7 +1,9 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package backends
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/andrew-boutin/dndtextapi/messages"
 	"github.com/andrew-boutin/dndtextapi/users"
@@ -32,9 +34,13 @@ type Backend interface {
 	UpdateMessage(int, *messages.Message) (*messages.Message, error)
 
 	// Users functionality
-	GetUsersInChannel(int) (users.UserCollection, error)
+	GetUsersInChannel(int) (*users.UserCollection, error)
 	IsUserInChannel(int, int) (bool, error)
 	AddUserToChannel(int, int) error
+	UpdateUser(int, *users.User) (*users.User, error)
+	DeleteUser(int) error
+	GetUser(string) (*users.User, error)
+	CreateUser(*users.GoogleUser) (*users.User, error)
 }
 
 // InitBackend initializes whatever backend matches the provided

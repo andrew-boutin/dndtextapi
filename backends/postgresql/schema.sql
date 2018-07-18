@@ -1,8 +1,10 @@
+-- Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 CREATE TABLE users (
     id bigserial primary key,
-    username varchar(30) NOT NULL,
-    email varchar(30) NOT NULL,
-    bio varchar(200) NOT NULL,
+    username varchar(30) UNIQUE NOT NULL,
+    email varchar(30) UNIQUE NOT NULL,
+    bio varchar(200) default '',
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
 );
@@ -22,7 +24,8 @@ CREATE TABLE channels (
 CREATE TABLE channels_users (
     channelid bigserial references channels(id),
     userid bigserial references users(id),
-    createdon timestamp default current_timestamp
+    createdon timestamp default current_timestamp,
+    UNIQUE (channelid, userid)
 );
 
 CREATE TABLE messages (
@@ -54,6 +57,6 @@ INSERT INTO channels_users
 (1, 1);
 
 INSERT INTO messages
-(userid, channelid, content, type) VALUES
-(1, 1, 'message one story', 'story'),
-(1, 1, 'messsage two meta', 'meta');
+(userid, channelid, content, isStory) VALUES
+(1, 1, 'message one story', true),
+(1, 1, 'messsage two meta', false);

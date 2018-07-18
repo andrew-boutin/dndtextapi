@@ -1,3 +1,5 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package middleware
 
 import (
@@ -20,14 +22,14 @@ const (
 
 	// Other
 	applicationJSONHeaderVal = "application/json"
-
-	idPathParam = "id"
+	idPathParam              = "id"
 )
 
 // Query parameters and their valid values
 const (
 	channelIDQueryParam = "channelID"
 
+	// TODO: Find a better way to set these up
 	// msgTypeQueryParam can be `story` or `meta`.
 	msgTypeQueryParam = "msgType"
 	metaMsgType       = "meta"
@@ -39,7 +41,7 @@ const (
 	memberLevel     = "member"
 )
 
-// Errors
+// Errors used throughout the middleware.
 var (
 	// ErrPathParamNotFound is the error to use when a parameter is expected but
 	// not found in the path.
@@ -63,12 +65,14 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	// TODO: Is it possible to register a middleware at the beginning of all PUT/GET etc. routes?
 	r.Use(ContextInjectionMiddleware(backend))
 
-	// TODO: Anonymous routes
+	RegisterAuthenticationRoutes(r)
 
-	// TODO: Requires authn
-	RegisterChannelsMiddleware(r)
-	RegisterUsersMiddleware(r)
-	RegisterMessagesMiddleware(r)
+	authorized := r.Group("/")
+	authorized.Use(AuthenticationMiddleware)
+
+	RegisterChannelsRoutes(authorized)
+	RegisterUsersRoutes(authorized)
+	RegisterMessagesRoutes(authorized)
 }
 
 // GetDBBackend pulls the db backend out of the context that
@@ -177,9 +181,4 @@ func QueryParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 	}
 
 	return pInt, nil
-}
-
-// GetAuthenticatedUserID TODO: Need to implement authentication
-func GetAuthenticatedUserID() int {
-	return 1
 }

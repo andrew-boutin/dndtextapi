@@ -14,7 +14,7 @@ Messages have a *msgType* which is either *meta* or *story*. Meta Messages are a
 
 ## Authentication
 
-... [golang oauth2](https://github.com/golang/oauth2/) ...
+... TODO: fill in [golang oauth2](https://github.com/golang/oauth2/) ...
 
 ## Endpoints
 
@@ -39,44 +39,58 @@ Message Routes
 User Routes
 
 - Get Users for Channel GET /users?channelID=id
+- Update User PUT /users/id
+- Delete User DELETE /users/id
 
 ## Use Cases
 
 ### Anonymous Users
 
-Anonymous User wants to get all public Channels. [NOT IMPLEMENTED] 5
+Anonymous User wants to get all public Channels. TODO: 4
 
-- GET /channels - get all public Channels for unauthenticated Users. [TODO: NOT IMPLEMENTED] 5
+- GET /channels TODO: 4
 
-Anonymous User wants to get a single public Channel. [TODO: NOT IMPLEMENTED] 5
+Anonymous User wants to get a single public Channel. TODO: 4
 
-- GET /channel/id - get the Channel if it's public. [TODO: NOT IMPLEMENTED] 5
+- GET /channel/id TODO: 4
 
-Anonymous User wants to get the story Messages from a public Channel. [TODO: NOT IMPLEMENTED] 5
+Anonymous User wants to get the story Messages from a public Channel. TODO: 4
 
-- GET /messages?channelID=id - get all story Messages if the Channel is public. [TODO: NOT IMPLEMENTED] 5
+- GET /messages?channelID=id TODO: 4
 
-Anonymous User wants to create an account. [TODO: NOT IMPLEMENTED] 1
+Anonymous User wants to create an account.
 
-Anonymous User wants to sign in. [TODO: NOT IMPLEMENTED] 1
+- GET /login
+
+Anonymous User wants to sign in.
+
+- GET /login
 
 ### Authenticated Users
 
-User wants to update their account info. [TODO: NOT IMPLEMENTED] 2
+User wants to update their account info.
 
-User wants to delete their account. [TODO: NOT IMPLEMENTED] 2
+- PUT /users/id
+
+User wants to delete their account.
+
+- DELETE /users/id
 
 User wants to get all public Channels.
 
-- GET /channels - get all public Channels.
+- GET /channels
 
 User wants to get a single public Channel.
 
-- GET /channels/id - get the Channel if it's public.
+- GET /channels/id
 
 User wants to get story Messages from public Channel.
 
 - GET /messages?channelID=id?msgType=story
+
+User wants to sign out. TODO: 1
+
+- GET /logout TODO: 1
 
 ## Channel Members
 
@@ -112,9 +126,9 @@ User wants to delete their Message in the Channel they're a member of.
 
 - DELETE /messages/id
 
-User wants to accept an invitation to join a Channel. [TODO: NOT IMPLEMENTED] 4
+User wants to accept an invitation to join a Channel. TODO: 3
 
-User wants to leave a Channel they're a member of. [TODO: NOT IMPLEMENTED] 4
+User wants to leave a Channel they're a member of. TODO: 3
 
 User wants to list all other Users in a Channel they're a member of.
 
@@ -134,9 +148,9 @@ User wants to update their channel data.
 
 - PUT /channels/id
 
-User wants to add someone to their channel. [TODO: NOT IMPLEMENTED] 3
+User wants to add someone to their channel. TODO: 2
 
-User wants to remove someone from their channel. [TODO: NOT IMPLEMENTED] 3 (do not let them remove themselves)
+User wants to remove someone from their channel. TODO: 2 (do not let them remove themselves)
 
 User wants to delete a Message in their Channel.
 
@@ -145,3 +159,7 @@ User wants to delete a Message in their Channel.
 User wants to delete their Channel.
 
 - DELETE /channels/id
+
+### Admin Users
+
+TODO: 5

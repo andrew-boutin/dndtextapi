@@ -1,7 +1,10 @@
+// Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
+
 package postgresql
 
 import (
 	sqlP "database/sql"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/messages"
@@ -18,6 +21,13 @@ var messageColumns = []string{
 	"isstory",
 	"createdon",
 	"lastupdated",
+}
+
+func init() {
+	// Add the Message table name in front of the columms to avoid ambigious references.
+	for i, col := range messageColumns {
+		messageColumns[i] = fmt.Sprintf("%s.%s", messagesTable, col)
+	}
 }
 
 // GetMessagesInChannel retrieves all of the Messages in the database
@@ -48,7 +58,6 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (*me
 	for rows.Next() {
 		var message messages.Message
 		err = rows.StructScan(&message)
-
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +74,7 @@ func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, er
 		Insert(messagesTable).
 		Columns("userid", "channelid", "content").
 		Values(m.UserID, m.ChannelID, m.Content).
-		Suffix("RETURNING id, userid, channelid, content, type, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, userid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create message sql.")
@@ -159,7 +168,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		Update(messagesTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, userid, channelid, content, type, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, userid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err
