@@ -68,6 +68,10 @@ Anonymous User wants to sign in.
 
 ### Authenticated Users
 
+User wants to get their account info.
+
+- GET /users/id
+
 User wants to update their account info.
 
 - PUT /users/id

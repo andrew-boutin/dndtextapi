@@ -2,7 +2,7 @@
 
 ## Manual Endpoint Testing
 
-Most of the endpoints require headers like `CONTENT-TYPE` and/or `ACCEPT`. Also, many of the endpoints are for operations other than `GET`.This makes hitting the endpoints directly mostly unusable directly through the browser. On top of this, most endpoints require authentication which requires sending a cookie along with your requests so things like `curl` and standard `Postman` can't be used out of the box either.
+Most of the endpoints require headers like `CONTENT-TYPE` and/or `ACCEPT`. Also, many of the endpoints are for operations other than `GET`. This makes hitting the endpoints directly through the browser mostly unusable. On top of this, most endpoints require authentication which requires sending a cookie along with your requests so things like `curl` and standard `Postman` can't be used out of the box either.
 
 However, you can a combintation of `Chrome`, `Postman`, and `Interceptor` to be able to easily make REST API requests.
 

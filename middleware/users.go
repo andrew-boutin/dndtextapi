@@ -8,12 +8,14 @@ import (
 	"github.com/andrew-boutin/dndtextapi/channels"
 	"github.com/andrew-boutin/dndtextapi/users"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 // RegisterUsersRoutes registers all of the Users routes with their
 // associated middleware.
 func RegisterUsersRoutes(g *gin.RouterGroup) {
 	g.GET("/users", RequiredHeadersMiddleware(acceptHeader), GetUsersInChannel)
+	g.GET("/users/:id", RequiredHeadersMiddleware(acceptHeader), GetUser)
 	g.PUT("/users/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateUser)
 	g.DELETE("/users/:id", DeleteUser)
 }
@@ -63,6 +65,27 @@ func GetUsersInChannel(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, users)
+}
+
+// GetUser retrieves the User matching the id in the path.
+func GetUser(c *gin.Context) {
+	user := GetAuthenticatedUser(c)
+
+	userIDFromPath, err := PathParamAsIntExtractor(c, idPathParam)
+	if err != nil {
+		log.WithError(err).Error("Failed to get User id from path.")
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	// Users are only allowed to retrieve themselves
+	if userIDFromPath != user.ID {
+		log.Error("User attempted to get a User other than themselves.")
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 // UpdateUser allows a User to update some of their own User data.

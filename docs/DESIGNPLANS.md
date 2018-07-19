@@ -4,7 +4,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Wanted Features
 
-- Get User (self)
 - User last login
 - User logout
 - - `govendor install +local` in container on startup
