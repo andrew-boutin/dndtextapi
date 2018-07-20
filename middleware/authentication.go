@@ -138,15 +138,22 @@ func CallbackHandler(c *gin.Context) {
 	// TODO: Could return some data to indicate a returning user or not
 	user, err := getOrCreateUser(dbBackend, googleUser)
 	if err != nil {
-		log.WithError(err).Error("Failed to either look up or create User.")
+		log.WithError(err).Error("Failed to either look up or create user.")
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Deny access if the User has been banned.
+	if user.IsBanned {
+		log.Error("Banned user attempted to access route.")
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
 	// Create a session for the User and put it in the session store so we can check if they're authenticated later
 	err = createUserSession(c, user.Email)
 	if err != nil {
-		log.WithError(err).Error("Failed to create a User session.")
+		log.WithError(err).Error("Failed to create a user session.")
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -211,10 +218,19 @@ func AuthenticationMiddleware(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 	user, err := dbBackend.GetUserByEmail(email)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to look up User using session email data %s.", email)
+		log.WithError(err).Errorf("Failed to look up user using session email data %s.", email)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	// Deny access if the User has been banned here too since the ban could have happened
+	// while they have an active session
+	if user.IsBanned {
+		log.Error("Banned user attempted to access route.")
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	c.Set(userContextKey, user)
 }
 

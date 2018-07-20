@@ -22,6 +22,7 @@ var userColumns = []string{
 	"email",
 	"bio",
 	"isadmin",
+	"isbanned",
 	"createdon",
 	"lastupdated",
 }
@@ -37,7 +38,7 @@ func init() {
 // the provided ID.
 func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) {
 	sql, args, err := PSQLBuilder().
-		Select("id", "username", "email", "bio", "isadmin", "users.createdon", "users.lastupdated").
+		Select("id", "username", "email", "bio", "isadmin", "isbanned", "users.createdon", "users.lastupdated").
 		From(usersTable).
 		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, usersTable, channelsUsersTable)). // TODO: Is this an inner join?
 		Where(sq.Eq{"channelid": id}).
@@ -51,7 +52,7 @@ func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) 
 
 // GetAllUsers retrieves all Users from the database - including their User.IsAdmin flag.
 func (backend Backend) GetAllUsers() (*users.UserCollection, error) {
-	selects := []string{"id", "username", "email", "bio", "isadmin", "users.createdon", "users.lastupdated"}
+	selects := []string{"id", "username", "email", "bio", "isadmin", "isbanned", "users.createdon", "users.lastupdated"}
 	sql, args, err := PSQLBuilder().
 		Select(selects...).
 		From(usersTable).
@@ -180,7 +181,7 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		Update(usersTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, username, email, bio, isadmin, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -260,7 +261,7 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 		Insert(usersTable).
 		Columns("username", "email").
 		Values(gu.Email, gu.Email).
-		Suffix("RETURNING id, username, email, bio, isadmin, createdon, lastupdated"). // TODO: Use userColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, createdon, lastupdated"). // TODO: Use userColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create user sql.")

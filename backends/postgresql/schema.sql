@@ -3,6 +3,7 @@
 CREATE TABLE users (
     id bigserial primary key,
     isadmin bool default false,
+    isbanned bool default false,
     username varchar(30) UNIQUE NOT NULL,
     email varchar(30) UNIQUE NOT NULL,
     bio varchar(200) default '',
@@ -51,7 +52,8 @@ INSERT INTO users
 
 INSERT INTO channels
 (ownerid, dmid, name, description, isprivate) VALUES
-(1, 1, 'my channel', 'my channel description', false);
+(1, 1, 'my public channel', 'my public channel description', false),
+(1, 1, 'my private channel', 'my private channel description', true);
 
 INSERT INTO channels_users
 (channelid, userid) VALUES

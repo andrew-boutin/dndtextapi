@@ -4,13 +4,11 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Wanted Features
 
-- User banned flag (admin update)
 - User last login
 - User logout
 - Beef up design doc (especially authentication)
 - Owner invite user to/remove user from channel
 - User accept invitation to/leave channel
-- Admin routes (User flag)
 - Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
 - User/channel characters
@@ -22,7 +20,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Swagger spec
 - DB Migrations - for CD - separate db user
 - CI
-- Authz (should be fine for a while with just admin flag)
 
 ## Fix Ups
 
@@ -42,7 +39,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 Set up with `RegisterAdminRoutes(authorized)`
 and admin route `g.GET("/test", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
-while admin `route g.GET("/admin/users", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetUsers)` gets 401
+while admin route `g.GET("/admin/users", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetUsers)` gets 401
 
 ```bash
 [sessions] ERROR! securecookie: the value is not valid
