@@ -38,6 +38,42 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - User bio - should it also have NOT NULL... could a User go in and modify bio to NULL?
 - Hide User.IsAdmin from non /admin routes
 
+### Admin routes session issue
+
+Set up with `RegisterAdminRoutes(authorized)`
+and admin route `g.GET("/test", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
+while admin `route g.GET("/admin/users", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetUsers)` gets 401
+
+```bash
+[sessions] ERROR! securecookie: the value is not valid
+time="2018-07-20T01:31:02Z" level=error msg="No session data found denying access."
+[GIN] 2018/07/20 - 01:31:02 | 401 |    6.550323ms |      172.19.0.1 | GET      /admin/users
+```
+
+and you end up with 3 cookies in the response. One for `/`, `/admin`, and `/admin/users`.
+
+Set up with
+
+```go
+admin := authorized.Group("/")
+admin.Use(RequireAdminHandler)
+RegisterAdminRoutes(admin)
+```
+
+while admin route `g.GET("/test", RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
+and admin route `g.GET("/admin/messages", RequiredHeadersMiddleware(acceptHeader), AdminGetMessages)` gets 401
+
+```bash
+[sessions] ERROR! securecookie: the value is not valid
+time="2018-07-20T01:43:01Z" level=error msg="No session data found denying access."
+[GIN] 2018/07/20 - 01:43:01 | 401 |       790.1µs |      172.19.0.1 | GET      /admin/users
+```
+
+and you end up with 3 cookies in the response. One for `/`, `/admin`, and `/admin/users`.
+
+Problem appears to be related to routes that have multiple slashes (aside from for /:id). So routes that are
+`/...` work while `/.../...` have session issues.
+
 ## Notes
 
 REST API would allow 3rd party apps (Slack/HipChat/Mupchat/etc.) to send Messages on behalf of Users.

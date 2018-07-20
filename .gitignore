@@ -1,6 +1,7 @@
 # App specific
 ## Secret config files
 client.json
+clients.json
 
 ## Ignore vendor packages
 vendor/*

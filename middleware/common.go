@@ -75,6 +75,11 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	RegisterChannelsRoutes(authorized)
 	RegisterUsersRoutes(authorized)
 	RegisterMessagesRoutes(authorized)
+
+	// Set up all of the admin only routes
+	admin := authorized.Group("/") // TODO: want this to be `/admin`
+	admin.Use(RequireAdminHandler)
+	RegisterAdminRoutes(admin)
 }
 
 // GetDBBackend pulls the db backend out of the context that
