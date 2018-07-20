@@ -21,14 +21,14 @@ Create file `client.json` at the root of the repo that looks like:
 
 Install [`Go`](https://golang.org/).
 
-In order to get dependencies set up Govendor:
+In order to get dependencies set up `Govendor`:
 
 ```bash
 # Install
 go get -u github.com/kardianos/govendor
 
 # Set environement variable that Makefile utilizes
-export GOLINT_PATH=<golint binary location - possibly $GOPATH/bin>
+export GOVENDOR_PATH=<govendor binary location - possibly $GOPATH/bin>
 ```
 
 In order to lint set up the following:

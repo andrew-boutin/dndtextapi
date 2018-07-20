@@ -65,6 +65,8 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	// TODO: Is it possible to register a middleware at the beginning of all PUT/GET etc. routes?
 	r.Use(ContextInjectionMiddleware(backend))
 
+	RegisterAnonymousRoutes(r)
+
 	RegisterAuthenticationRoutes(r)
 
 	authorized := r.Group("/")

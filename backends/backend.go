@@ -39,8 +39,10 @@ type Backend interface {
 	AddUserToChannel(int, int) error
 	UpdateUser(int, *users.User) (*users.User, error)
 	DeleteUser(int) error
-	GetUser(string) (*users.User, error)
+	GetUserByEmail(string) (*users.User, error)
+	GetUserByID(int) (*users.User, error)
 	CreateUser(*users.GoogleUser) (*users.User, error)
+	GetAllUsers() (*users.UserCollection, error)
 }
 
 // InitBackend initializes whatever backend matches the provided

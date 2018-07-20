@@ -64,7 +64,7 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelColl
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
-		Where(sq.Eq{"owner": userID}).
+		Where(sq.Eq{"ownerid": userID}).
 		ToSql()
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@
 
 CREATE TABLE users (
     id bigserial primary key,
+    isadmin bool default false,
     username varchar(30) UNIQUE NOT NULL,
     email varchar(30) UNIQUE NOT NULL,
     bio varchar(200) default '',
@@ -38,15 +39,15 @@ CREATE TABLE messages (
     lastupdated timestamp default current_timestamp
 );
 
--- Use function provided from trigger.sql to handle updating lastmodified timestamps on updates
+-- Use function provided from functions.sql to handle updating lastmodified timestamps on updates
 CREATE TRIGGER users_updated_at_modtime BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER channels_updated_at_modtime BEFORE UPDATE ON channels FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 
 -- Sample data
 INSERT INTO users
-(username, email, bio) VALUES
-('user1', 'my@email.com', 'my first user');
+(username, email, isadmin) VALUES
+('andrew.w.boutin@gmail.com', 'andrew.w.boutin@gmail.com', true);
 
 INSERT INTO channels
 (ownerid, dmid, name, description, isprivate) VALUES

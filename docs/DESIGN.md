@@ -4,6 +4,10 @@
 
 ### Users
 
+Users have an *isAdmin* flag. Admins can reach the `/admin/...` routes to perform admin operations on Channels, Messages, and Users. Admins can't administer other admin Users or create new admins.
+
+Adding or removing admins should be done directly on the database using the database user with elevated permissions.
+
 ### Channels
 
 Channels have a *visibility* which is either *public* or *private*. Public means anyone can view the story Messages in the Channel and also see the Channel details. The meta Messages aren't available even though the Channel is public. Private means only Users who are members of the Channel can view any of the Messages in the Channel and the Channel details.
@@ -16,7 +20,20 @@ Messages have a *msgType* which is either *meta* or *story*. Meta Messages are a
 
 ... TODO: fill in [golang oauth2](https://github.com/golang/oauth2/) ...
 
+> Tldr; set up Google cloud project (free) to get client creds, set up /login to redirect user to Google login w/ client creds, Google redirects user to /callback with an access code, I take access code and call Google API to get Google User profile, I then either create or load User mapped to unique Google email, create session for User, require other end points be able to look up active session before proceeding
+
 ## Endpoints
+
+Anonymous Routes
+
+- Get public Channels GET /public/channels
+- Get public Channel GET /public/channels/id
+- Get story Messages from public Channel GET /public/messages?channelID=id
+
+Authentication Routes
+
+- Login GET /login
+- Google authentication callback GET /callback
 
 Channel Routes
 
@@ -42,128 +59,23 @@ User Routes
 - Update User PUT /users/id
 - Delete User DELETE /users/id
 
-## Use Cases
+Admin Routes TODO:
 
-### Anonymous Users
+- Get all Channels GET /channels
+- Get a Channel GET /channels/id
+- Update a Channel PUT /channels/id
+- Delete a Channel DELETE /channels/id
 
-Anonymous User wants to get all public Channels. TODO: 4
+- Get all Messages in a Channel GET /messages?channelID=id
+- Get a Message GET /messages/id
+- Update a Message PUT /messages/id
+- Delete a Message DELETE /messages/id
 
-- GET /channels TODO: 4
+- Get all Users GET /users
+- Get a User GET /users/id
+- Update a User PUT /users/id
+- Delete a User DELETE /users/id
 
-Anonymous User wants to get a single public Channel. TODO: 4
+## Usecases
 
-- GET /channel/id TODO: 4
-
-Anonymous User wants to get the story Messages from a public Channel. TODO: 4
-
-- GET /messages?channelID=id TODO: 4
-
-Anonymous User wants to create an account.
-
-- GET /login
-
-Anonymous User wants to sign in.
-
-- GET /login
-
-### Authenticated Users
-
-User wants to get their account info.
-
-- GET /users/id
-
-User wants to update their account info.
-
-- PUT /users/id
-
-User wants to delete their account.
-
-- DELETE /users/id
-
-User wants to get all public Channels.
-
-- GET /channels
-
-User wants to get a single public Channel.
-
-- GET /channels/id
-
-User wants to get story Messages from public Channel.
-
-- GET /messages?channelID=id?msgType=story
-
-User wants to sign out. TODO: 1
-
-- GET /logout TODO: 1
-
-## Channel Members
-
-User wants to get all of the Channels they have access to.
-
-- GET /channels
-
-User wants to get all of the Channels they are a member of.
-
-- GET /channels?level=member
-
-User wants to get a single Channel they are a member of.
-
-- GET /channels/id
-
-User wants to get story Messages from a channel they're a member of.
-
-- GET /messages?channelID=id&msgType=story
-
-User wants to see all of the messages of a channel they're a member of.
-
-- GET /messages?channelID=id
-
-User wants to create a Messsage in the Channel.
-
-- POST /messages
-
-User wants to edit their Message in the Channel.
-
-- PUT /messages/id
-
-User wants to delete their Message in the Channel they're a member of.
-
-- DELETE /messages/id
-
-User wants to accept an invitation to join a Channel. TODO: 3
-
-User wants to leave a Channel they're a member of. TODO: 3
-
-User wants to list all other Users in a Channel they're a member of.
-
-- GET /users?channelID=id
-
-### Channel Owners
-
-User wants to get all Channels that they're the owner of.
-
-- GET /channels?level=owner
-
-User wants to create a channel.
-
-- POST /channels
-
-User wants to update their channel data.
-
-- PUT /channels/id
-
-User wants to add someone to their channel. TODO: 2
-
-User wants to remove someone from their channel. TODO: 2 (do not let them remove themselves)
-
-User wants to delete a Message in their Channel.
-
-- DELETE /messages/id
-
-User wants to delete their Channel.
-
-- DELETE /channels/id
-
-### Admin Users
-
-TODO: 5
+There is a list of [`use cases`](docs/USECASES.md) that describe who might want to do what and how they would do it.

@@ -16,6 +16,7 @@ type User struct {
 	Email       string
 	Bio         string
 	ID          int
+	IsAdmin     bool // TODO: May have broken some User routes with this addition
 	CreatedOn   time.Time
 	LastUpdated time.Time
 }

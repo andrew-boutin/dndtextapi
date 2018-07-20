@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	schemaFilePath  = "./backends/postgresql/schema.sql"
-	triggerFilePath = "./backends/postgresql/trigger.sql"
+	schemaFilePath    = "./backends/postgresql/schema.sql"
+	functionsFilePath = "./backends/postgresql/functions.sql"
 )
 
 // Backend contains all of the data specific to a Postgres backend
@@ -70,10 +70,10 @@ func RunHealthCheck(db *sqlx.DB) error {
 
 // initSchema initializes the schema for the Postgresql database.
 func initSchema(db *sqlx.DB) {
-	// The function defined in triggerFilePath has multiple semi colons that
+	// The function defined in functionsFilePath has multiple semi colons that
 	// are part of a single statement so it gets processed differently
 	// than the statements in the schema file
-	file, err := ioutil.ReadFile(triggerFilePath)
+	file, err := ioutil.ReadFile(functionsFilePath)
 	if err != nil {
 		panic(err)
 	}

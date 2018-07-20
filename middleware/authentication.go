@@ -32,6 +32,8 @@ const (
 
 	// userContextKey is the key to look up the authenticated User in the Context with.
 	userContextKey = "USER_CONTEXT_KEY"
+
+	cookieName = "dndtextapisession"
 )
 
 // googleOauthConfig is all of the config data required to authenticate a User with Google
@@ -67,9 +69,8 @@ func InitAuthentication(c configs.ClientConfiguration) {
 // RegisterAuthenticationRoutes adds the authentication routes
 func RegisterAuthenticationRoutes(r *gin.Engine) {
 	// Use the cookie store
-	r.Use(sessions.Sessions("dndtextapisession", store))
+	r.Use(sessions.Sessions(cookieName, store))
 
-	// r.GET("/", IndexHandler) IndexHandler just gives a link to LoginHandler so that seems not necessary for now
 	r.GET("/login", LoginHandler)
 	r.GET("/callback", CallbackHandler)
 }
@@ -149,6 +150,8 @@ func CallbackHandler(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // readInGoogleUser converts a Response into Google User data.
@@ -173,8 +176,9 @@ func createUserSession(c *gin.Context, email string) error {
 // getOrCreateUser attempts to lookup a User in the database and creates a new one if one
 // doesn't already exist.
 func getOrCreateUser(dbBackend backends.Backend, gu *users.GoogleUser) (user *users.User, err error) {
+	// TODO: Move this logic into a backend function so it can also handle updating lastlogin
 	// Attempt to look up the Google User in the database
-	user, err = dbBackend.GetUser(gu.Email)
+	user, err = dbBackend.GetUserByEmail(gu.Email)
 	if err == users.ErrUserNotFound {
 		// Create a new User in the database for this new Google profile
 		user, err = dbBackend.CreateUser(gu)
@@ -205,7 +209,7 @@ func AuthenticationMiddleware(c *gin.Context) {
 	// Look up the User and set in the Context so all future middleware can have access
 	email := emailAsInterface.(string)
 	dbBackend := GetDBBackend(c)
-	user, err := dbBackend.GetUser(email)
+	user, err := dbBackend.GetUserByEmail(email)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to look up User using session email data %s.", email)
 		c.AbortWithError(http.StatusInternalServerError, err)

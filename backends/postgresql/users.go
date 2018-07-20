@@ -21,6 +21,7 @@ var userColumns = []string{
 	"username",
 	"email",
 	"bio",
+	"isadmin",
 	"createdon",
 	"lastupdated",
 }
@@ -36,7 +37,7 @@ func init() {
 // the provided ID.
 func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) {
 	sql, args, err := PSQLBuilder().
-		Select("id", "username", "email", "bio", "users.createdon", "users.lastupdated").
+		Select("id", "username", "email", "bio", "isadmin", "users.createdon", "users.lastupdated").
 		From(usersTable).
 		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, usersTable, channelsUsersTable)). // TODO: Is this an inner join?
 		Where(sq.Eq{"channelid": id}).
@@ -45,6 +46,26 @@ func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) 
 		return nil, err
 	}
 
+	return backend.runMultiUsersQuery(sql, args)
+}
+
+// GetAllUsers retrieves all Users from the database - including their User.IsAdmin flag.
+func (backend Backend) GetAllUsers() (*users.UserCollection, error) {
+	selects := []string{"id", "username", "email", "bio", "isadmin", "users.createdon", "users.lastupdated"}
+	sql, args, err := PSQLBuilder().
+		Select(selects...).
+		From(usersTable).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return backend.runMultiUsersQuery(sql, args)
+}
+
+// runMultiUsersQuery runs the given query with arguments to retrieve a User
+// collection.
+func (backend Backend) runMultiUsersQuery(sql string, args []interface{}) (*users.UserCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
 		return nil, err
@@ -159,7 +180,7 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		Update(usersTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, username, email, bio, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -189,8 +210,9 @@ func (backend Backend) DeleteUser(userID int) error {
 	return err
 }
 
-// GetUser retrieves a User by using the given email address.
-func (backend Backend) GetUser(email string) (*users.User, error) {
+// GetUserByEmail retrieves a User by using the given email address.
+// TODO: Combine with GetUserByID and take in query params of some sort
+func (backend Backend) GetUserByEmail(email string) (*users.User, error) {
 	sql, args, err := PSQLBuilder().
 		Select(userColumns...).
 		From(usersTable).
@@ -200,8 +222,28 @@ func (backend Backend) GetUser(email string) (*users.User, error) {
 		return nil, err
 	}
 
+	return backend.runSingleUserQuery(sql, args)
+}
+
+// GetUserByID retrieves a User by using the given id.
+func (backend Backend) GetUserByID(id int) (*users.User, error) {
+	sql, args, err := PSQLBuilder().
+		Select(userColumns...).
+		From(usersTable).
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return backend.runSingleUserQuery(sql, args)
+}
+
+// runSingleUserQuery executes the given query with the given arguments to
+// retrieve a single User.
+func (backend Backend) runSingleUserQuery(sql string, args []interface{}) (*users.User, error) {
 	user := &users.User{}
-	err = backend.db.Get(user, sql, args...)
+	err := backend.db.Get(user, sql, args...)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, users.ErrUserNotFound
@@ -218,7 +260,7 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 		Insert(usersTable).
 		Columns("username", "email").
 		Values(gu.Email, gu.Email).
-		Suffix("RETURNING id, username, email, bio, createdon, lastupdated"). // TODO: Use userColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, createdon, lastupdated"). // TODO: Use userColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create user sql.")

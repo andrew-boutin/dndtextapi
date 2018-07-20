@@ -4,14 +4,14 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Wanted Features
 
+- User banned flag (admin update)
 - User last login
 - User logout
-- - `govendor install +local` in container on startup
 - Beef up design doc (especially authentication)
-- Anonymous routes
 - Owner invite user to/remove user from channel
 - User accept invitation to/leave channel
 - Admin routes (User flag)
+- Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
 - User/channel characters
 - Channel goal/topic, notes, inventory, etc.
@@ -36,6 +36,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Make cmds don't go into vendor dir
 - Improve packages docs - only list ones that have info that should be shared
 - User bio - should it also have NOT NULL... could a User go in and modify bio to NULL?
+- Hide User.IsAdmin from non /admin routes
 
 ## Notes
 
