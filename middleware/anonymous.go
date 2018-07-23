@@ -77,8 +77,11 @@ func GetStoryMessagesInChannel(c *gin.Context) {
 
 	existingChannel, err := dbBackend.GetChannel(channelID)
 	if err != nil {
+		if err == channels.ErrChannelNotFound {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
 		// TODO: Maybe 400 if the channel id is bad
-		// TODO: What about 404
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

@@ -6,20 +6,19 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 - User last login
 - User logout
-- Beef up design doc (especially authentication)
 - Owner invite user to/remove user from channel
 - User accept invitation to/leave channel
 - Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
 - User/channel characters
-- Channel goal/topic, notes, inventory, etc.
+- Channel notes, inventory, etc.
 - Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases?
 - Transactions per route for rollbacks
-- Functional tests
-- Resource links: Self links. Collection links.
+- Integration tests that require authentication
 - Swagger spec
 - DB Migrations - for CD - separate db user
 - CI
+- Resource links: Self links. Collection links. (HAL) maybe https://github.com/pmoule/go2hal
 
 ## Fix Ups
 
@@ -34,6 +33,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Improve packages docs - only list ones that have info that should be shared
 - User bio - should it also have NOT NULL... could a User go in and modify bio to NULL?
 - Hide User.IsAdmin from non /admin routes
+- Beef up design doc (especially authentication)
 
 ### Admin routes session issue
 

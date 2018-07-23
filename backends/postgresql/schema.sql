@@ -2,11 +2,11 @@
 
 CREATE TABLE users (
     id bigserial primary key,
-    isadmin bool default false,
-    isbanned bool default false,
+    isadmin bool NOT NULL default false,
+    isbanned bool NOT NULL default false,
     username varchar(30) UNIQUE NOT NULL,
     email varchar(30) UNIQUE NOT NULL,
-    bio varchar(200) default '',
+    bio varchar(200) NOT NULL default '',
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
 );
@@ -15,9 +15,10 @@ CREATE TABLE channels (
     id bigserial primary key,
     ownerid bigserial references users(id),
     dmid bigserial references users(id),
-    name varchar(30) NOT NULL,
-    description text NOT NULL,
-    isprivate boolean NOT NULL,
+    name varchar(30) UNIQUE NOT NULL,
+    description text NOT NULL default '',
+    topic text NOT NULL default '',
+    isprivate boolean NOT NULL default false,
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
 );
@@ -47,19 +48,25 @@ CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH RO
 
 -- Sample data
 INSERT INTO users
-(username, email, isadmin) VALUES
-('andrew.w.boutin@gmail.com', 'andrew.w.boutin@gmail.com', true);
+(username, email, isadmin, isbanned) VALUES
+('andrew.w.boutin@gmail.com', 'andrew.w.boutin@gmail.com', true, false),
+('banneduser', 'banneduser@fake.com', false, true),
+('adminuser', 'adminuser@fake.com', true, false),
+('regularuser', 'regularuser@fake.com', false, false);
 
 INSERT INTO channels
-(ownerid, dmid, name, description, isprivate) VALUES
-(1, 1, 'my public channel', 'my public channel description', false),
-(1, 1, 'my private channel', 'my private channel description', true);
+(ownerid, dmid, name, description, topic, isprivate) VALUES
+(1, 1, 'my public channel', 'my public channel description', 'some topic', false),
+(1, 1, 'my private channel', 'my private channel description', '', true);
 
 INSERT INTO channels_users
 (channelid, userid) VALUES
-(1, 1);
+(1, 1),
+(2, 1);
 
 INSERT INTO messages
 (userid, channelid, content, isStory) VALUES
-(1, 1, 'message one story', true),
-(1, 1, 'messsage two meta', false);
+(1, 1, 'message one story public channel', true),
+(1, 1, 'messsage two meta public channel', false),
+(1, 2, 'message one story private channel', true),
+(1, 2, 'messsage two meta private channel', false);

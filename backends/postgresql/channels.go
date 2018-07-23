@@ -19,6 +19,7 @@ const (
 var channelColumns = []string{
 	"name",
 	"description",
+	"topic",
 	"id",
 	"ownerid",
 	"createdon",
@@ -136,9 +137,9 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 	// TODO: Don't require description, default isprivate to false
 	sql, args, err := PSQLBuilder().
 		Insert(channelsTable).
-		Columns("name", "description", "ownerid", "isprivate", "dmid").
+		Columns("name", "description", "topic", "ownerid", "isprivate", "dmid").
 		Values(c.Name, c.Description, c.OwnerID, c.IsPrivate, c.DMID).
-		Suffix("RETURNING id, name, description, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
+		Suffix("RETURNING id, name, description, topic, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create channel sql.")
@@ -200,6 +201,7 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 	setMap := map[string]interface{}{
 		"name":        c.Name,
 		"description": c.Description,
+		"topic":       c.Topic,
 		"ownerid":     c.OwnerID,
 		"isprivate":   c.IsPrivate,
 		"dmid":        c.DMID,
@@ -208,7 +210,7 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		Update(channelsTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, name, description, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
+		Suffix("RETURNING id, name, description, topic, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
 		ToSql()
 	if err != nil {
 		return nil, err

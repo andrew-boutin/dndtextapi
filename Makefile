@@ -1,12 +1,12 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
-.PHONY: all up down reapp test fmt lint vet updatedeps installdeps
+.PHONY: all up down reapp test fmt lint vet updatedeps installdeps inttests
 
 all: down test vet lint fmt up
 
-# Start up all containers
+# Start up the app related containers
 up:
-	@docker-compose up --build -d
+	@docker-compose up --build -d app
 
 # Tear down all containers
 down:
@@ -39,3 +39,8 @@ updatedeps:
 # Use govendor to install the dependencies listedin vendor/vendor.json
 installdeps:
 	@$(GOVENDOR_PATH) install +local
+
+# Run the integration tests
+inttests:
+	@docker-compose rm --force inttest
+	@docker-compose up --build inttest
