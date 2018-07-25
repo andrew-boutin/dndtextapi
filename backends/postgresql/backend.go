@@ -30,7 +30,6 @@ func MakePostgresqlBackend(user, password, dbname string) Backend {
 	dbinfo := fmt.Sprintf("host=db user=%s password=%s dbname=%s sslmode=disable",
 		user, password, dbname)
 	db, err := sqlx.Open("postgres", dbinfo)
-
 	if err != nil {
 		panic(err)
 	}

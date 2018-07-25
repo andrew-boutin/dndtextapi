@@ -3,8 +3,6 @@
 package configs
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -39,13 +37,17 @@ func LoadConfig() (configuration Configuration) {
 	}
 
 	// TODO: Change client creds to load from viper
-	var c ClientConfiguration
-	file, err := ioutil.ReadFile("client.json")
-	if err != nil {
-		log.WithError(err).Fatal("Failed to load client configuration.")
-		os.Exit(-1)
+	// var c ClientConfiguration
+	// c.
+	// file, err := ioutil.ReadFile("client.json")
+	// if err != nil {
+	// 	log.WithError(err).Fatal("Failed to load client configuration.")
+	// 	os.Exit(-1)
+	// }
+	// json.Unmarshal(file, &c)
+	configuration.Client = ClientConfiguration{
+		ID:     "id",
+		Secret: "secret",
 	}
-	json.Unmarshal(file, &c)
-	configuration.Client = c
 	return
 }

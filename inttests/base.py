@@ -23,18 +23,17 @@ class BaseTest(unittest.TestCase):
         self.client.verify()
 
     def get_authn_cookies_user_normal(self):
-        return self.authn_get_cookies('regularuser@fake.com')
+        return self.get_authn_cookies('regularuser@fake.com')
 
     def get_authn_cookies_user_admin(self):
-        return self.authn_get_cookies('adminuser@fake.com')
+        return self.get_authn_cookies('adminuser@fake.com')
 
     def get_authn_cookies_user_new(self):
         allchar = string.ascii_letters + string.digits
         random_name = "".join(choice(allchar) for x in range(8))
-        return self.authn_get_cookies(f'{random_name}user@fake.com')
+        return self.get_authn_cookies(f'{random_name}user@fake.com')
 
-    def authn_get_cookies(self, email):
-        # TODO: configurable authn urls for inttests vs other
+    def get_authn_cookies(self, email):
         self.client.stub(
             request(method="GET", path="/o/oauth2/auth"),
             response(code=200, body="fake google auth")

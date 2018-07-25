@@ -18,12 +18,12 @@ services:
 
   inttest:
     build: ./inttests/.
-    command: "python -m unittest discover -s . -p '*_test.py'"
+    command: "./wait-for-it.sh mockserver:1080 -- ./wait-for-it.sh app:8080 -- python -m unittest discover -s . -p '*_test.py'"
     depends_on:
       - mockserver
   mockserver:
-   image: jamesdbloom/mockserver:mockserver-5.2.3
-   ports:
-    - 1080:1080
-   environment:
-    - LOG_LEVEL=INFO
+    image: jamesdbloom/mockserver:mockserver-5.3.0
+    ports:
+      - 1080:1080
+    environment:
+      - LOG_LEVEL=INFO

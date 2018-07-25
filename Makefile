@@ -22,7 +22,7 @@ test:
 
 # Lint for style suggestions
 lint:
-	@$(GOLINT_PATH) ./...
+	@$(GOLINT_PATH) `go list ./... | grep -v /vendor/`
 
 # Vet the code to look for potential issues
 vet:
@@ -38,9 +38,9 @@ updatedeps:
 
 # Use govendor to install the dependencies listedin vendor/vendor.json
 installdeps:
-	@$(GOVENDOR_PATH) install +local
+	@$(GOVENDOR_PATH) install
 
 # Run the integration tests
 inttests:
 	@docker-compose rm --force inttest
-	@docker-compose up --build inttest
+	@docker-compose up --build --exit-code-from inttest inttest

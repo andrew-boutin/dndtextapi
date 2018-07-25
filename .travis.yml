@@ -1,0 +1,28 @@
+language: go
+go:
+  - "1.9.3"
+
+sudo: required
+services:
+  - docker
+
+env:
+  COMPOSE_VERSION: 1.18.0
+
+before_install:
+  - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+
+script:
+  - echo manual | sudo tee /etc/init/postgresql.override
+  - sudo service postgresql stop
+  # https://discuss.circleci.com/t/how-to-permanently-shutdown-circleci-default-postgres-mongodb-etc/7329/10
+  - service --status-all
+  - make up inttests
+  - docker logs dndtextapi_app_1
+  - docker logs dndtextapi_db_1
+  - dndtextapi_mockserver_1
+
+notifications:
+  email: false

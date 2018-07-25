@@ -2,25 +2,38 @@
 
 Some of the stuff that still has to be done and notes about how to do some of it.
 
-## Wanted Features
+## Features
 
+- CI `make all` works: ENV_VARS etc.
 - User last login
-- User logout
-- Owner invite user to/remove user from channel
-- User accept invitation to/leave channel
+  - Have `getOrCreateUser` be a db backend call so it knows to update last_login if User already exists.
+- **User logout: quick attempt ran into issue where session would just get re-created on next api request
+- *Owner invite user to channel / User accept invitation
+  - "invitation": foruserid, fromuserid, note, channelid, createdon, lastupdated
+    - Get /invitations?channelID=id retrieve all invitations for a single channel (either channel owner or in channel)
+    - Get /invitations/id retrieve single invitation (either in channel or channel owner)
+    - Post /invitations create single invitation - must be channel owner (for now)
+    - Put /invitations/id update single invitation - must have created the invitation
+    - Delete /invitations/id delete single invitation
+      - If foruserid - query param to accept or reject
+      - If created invitation just remove the invitation
+- *owner remove user from channel / user leave channel
+- *Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases (won't need every route)
 - Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
 - User/channel characters
 - Channel notes, inventory, etc.
-- Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases?
 - Transactions per route for rollbacks
 - Swagger spec
 - DB Migrations - for CD - separate db user
-- CI
 - Resource links: Self links. Collection links. (HAL) maybe https://github.com/pmoule/go2hal
 
 ## Fix Ups
 
+- app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile
+- CI build not running app correctly - may have to change postgresql port mapping...
+- CI fail build on failed tests
+- Env var or something similiar to choose what config file to use - default to testing
 - Get around having to rebuild docker images (map volume on startup or something etc.)
 - 403 instead of 401 in many places
 - Context err body in JSON format. One liner?
@@ -30,11 +43,12 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Notes about connecting and inspecting the database.
 - Restrict permissions for db api user.
 - Improve error handling (500s probably should only log the error and not expose the underlying problem.)
-- Make cmds don't go into vendor dir
 - Improve packages docs - only list ones that have info that should be shared
 - Hide User.IsAdmin from non /admin routes
 - Beef up design doc (especially authentication)
-- https://github.com/jamesdbloom/mockserver/issues/449 mock-server hangs when accessed before ready - roll back to 5.2.3 from 5.3.0
+- `wait-for-it.sh` in single place.
+- db column names use `_` between words
+- Separate schema for sample data
 
 ### Admin routes session issue
 
@@ -76,7 +90,7 @@ and you end up with 3 cookies in the response. One for `/`, `/admin`, and `/admi
 Problem appears to be related to routes that have multiple slashes (aside from for /:id). So routes that are
 `/...` work while `/.../...` have session issues.
 
-## Notes
+### Bot OBO User
 
 REST API would allow 3rd party apps (Slack/HipChat/Mupchat/etc.) to send Messages on behalf of Users.
 Ex: Could have a SlackBot that can listen in Slack and send out requests to this API so
