@@ -7,14 +7,14 @@
 package middleware
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/andrew-boutin/dndtextapi/backends"
 	"github.com/andrew-boutin/dndtextapi/configs"
+
+	"github.com/andrew-boutin/dndtextapi/backends"
 	"github.com/andrew-boutin/dndtextapi/users"
 
 	"github.com/dchest/uniuri"
@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 const (
@@ -36,22 +35,25 @@ const (
 	cookieName = "dndtextapisession"
 )
 
+var googleAccountURL = "%s/oauth2/v2/userinfo?access_token="
+
 // googleOauthConfig is all of the config data required to authenticate a User with Google
 var googleOauthConfig = &oauth2.Config{
 	RedirectURL:  "http://localhost:8080/callback",
-	ClientID:     "",
-	ClientSecret: "",
+	ClientID:     "", // Populated by config load
+	ClientSecret: "", // Populated by config load
 	Scopes: []string{
 		"https://www.googleapis.com/auth/userinfo.profile",
 		"https://www.googleapis.com/auth/userinfo.email"},
-	Endpoint: google.Endpoint,
+	Endpoint: oauth2.Endpoint{}, // Populated by config load
 }
 
 // store is the session store used for authentication
 var store cookie.Store
 
 func init() {
-	store = cookie.NewStore([]byte(randToken(64)))
+	// store = cookie.NewStore([]byte(randToken(64))) # Random is causing issues between restarts
+	store = cookie.NewStore([]byte("asdaskdhasdhgsajdgasdsadksakdhasidoajsdousahdopj")) // TODO: Make this from the config
 	store.Options(sessions.Options{
 		Path: "/",
 		// 1 week
@@ -61,9 +63,17 @@ func init() {
 
 // InitAuthentication initializes authentication configuration that has
 // to be read in from config files
-func InitAuthentication(c configs.ClientConfiguration) {
-	googleOauthConfig.ClientID = c.ID
-	googleOauthConfig.ClientSecret = c.Secret
+func InitAuthentication(c configs.Configuration) {
+	clientConfig := c.Client
+	googleOauthConfig.ClientID = clientConfig.ID
+	googleOauthConfig.ClientSecret = clientConfig.Secret
+
+	authenticationConfig := c.Authentication
+	googleOauthConfig.Endpoint = oauth2.Endpoint{
+		AuthURL:  fmt.Sprintf("%s/o/oauth2/auth", authenticationConfig.Oauth2),
+		TokenURL: fmt.Sprintf("%s/o/oauth2/token", authenticationConfig.Oauth2),
+	}
+	googleAccountURL = fmt.Sprintf(googleAccountURL, authenticationConfig.Accounts)
 }
 
 // RegisterAuthenticationRoutes adds the authentication routes
@@ -120,7 +130,7 @@ func CallbackHandler(c *gin.Context) {
 	}
 
 	// Attempt to get the User info from Google using the access token
-	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	response, err := http.Get(googleAccountURL + token.AccessToken)
 	if err != nil {
 		log.WithError(err).Error("Failed to get Google User data.")
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -191,13 +201,6 @@ func getOrCreateUser(dbBackend backends.Backend, gu *users.GoogleUser) (user *us
 		user, err = dbBackend.CreateUser(gu)
 	}
 	return
-}
-
-// randToken generates a random token of the given length.
-func randToken(l int) string {
-	b := make([]byte, l)
-	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
 }
 
 // AuthenticationMiddleware requires that the User is authenticated or else they

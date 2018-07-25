@@ -15,8 +15,9 @@ import (
 // Configuration is the top level configuration data from
 // the config file.
 type Configuration struct {
-	Backend BackendConfiguration
-	Client  ClientConfiguration
+	Backend        BackendConfiguration
+	Authentication AuthenticationConfiguration
+	Client         ClientConfiguration
 }
 
 // LoadConfig loads the config file into the configuration
@@ -24,7 +25,8 @@ type Configuration struct {
 func LoadConfig() (configuration Configuration) {
 	// TODO: What about pflags?
 	// TODO: What about env vars?
-	viper.SetConfigName("config")
+	// viper.SetConfigName("config") // TODO: ENV_VAR to specify which config file to use?
+	viper.SetConfigName("config-inttest")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
 		log.WithError(err).Fatal("Error reading config file.")

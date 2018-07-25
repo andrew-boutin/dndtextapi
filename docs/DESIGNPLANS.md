@@ -14,7 +14,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Channel notes, inventory, etc.
 - Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases?
 - Transactions per route for rollbacks
-- Integration tests that require authentication
 - Swagger spec
 - DB Migrations - for CD - separate db user
 - CI
@@ -22,6 +21,8 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
+- Get around having to rebuild docker images (map volume on startup or something etc.)
+- 403 instead of 401 in many places
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
 - Add a lot more logging (especially in all middleware right before aborting request)
@@ -31,11 +32,15 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Improve error handling (500s probably should only log the error and not expose the underlying problem.)
 - Make cmds don't go into vendor dir
 - Improve packages docs - only list ones that have info that should be shared
-- User bio - should it also have NOT NULL... could a User go in and modify bio to NULL?
 - Hide User.IsAdmin from non /admin routes
 - Beef up design doc (especially authentication)
+- https://github.com/jamesdbloom/mockserver/issues/449 mock-server hangs when accessed before ready - roll back to 5.2.3 from 5.3.0
 
 ### Admin routes session issue
+
+TODO: Authn and then go to /admin route in browser and observe server response.
+TODO: Potentially related to non variable cookie initializer
+TODO: Potentially related to copy/pasting cookie without path info etc.
 
 Set up with `RegisterAdminRoutes(authorized)`
 and admin route `g.GET("/test", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
