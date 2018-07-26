@@ -1,6 +1,6 @@
 # App specific
 ## Secret config files
-client.json
+config-prod.yml
 clients.json
 
 ## Ignore vendor packages

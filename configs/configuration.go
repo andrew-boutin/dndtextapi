@@ -15,7 +15,6 @@ import (
 type Configuration struct {
 	Backend        BackendConfiguration
 	Authentication AuthenticationConfiguration
-	Client         ClientConfiguration
 }
 
 // LoadConfig loads the config file into the configuration
@@ -23,8 +22,8 @@ type Configuration struct {
 func LoadConfig() (configuration Configuration) {
 	// TODO: What about pflags?
 	// TODO: What about env vars?
-	// viper.SetConfigName("config") // TODO: ENV_VAR to specify which config file to use?
-	viper.SetConfigName("config-inttest")
+	// TODO: ENV_VAR to specify which config file to use? viper.SetConfigName("config")
+	viper.SetConfigName("config-int")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
 		log.WithError(err).Fatal("Error reading config file.")
@@ -34,20 +33,6 @@ func LoadConfig() (configuration Configuration) {
 	if err != nil {
 		log.WithError(err).Fatal("Unable to decode into struct.")
 		os.Exit(-1)
-	}
-
-	// TODO: Change client creds to load from viper
-	// var c ClientConfiguration
-	// c.
-	// file, err := ioutil.ReadFile("client.json")
-	// if err != nil {
-	// 	log.WithError(err).Fatal("Failed to load client configuration.")
-	// 	os.Exit(-1)
-	// }
-	// json.Unmarshal(file, &c)
-	configuration.Client = ClientConfiguration{
-		ID:     "id",
-		Secret: "secret",
 	}
 	return
 }

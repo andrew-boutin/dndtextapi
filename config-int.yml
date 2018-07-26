@@ -6,3 +6,5 @@ backend:
 authentication:
   accounts: http://mockserver:1080
   oauth2: http://mockserver:1080
+  id: "clientid"
+  secret: "clientsecret"

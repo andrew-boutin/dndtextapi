@@ -17,7 +17,7 @@ func main() {
 	backend := backends.InitBackend(configuration.Backend)
 
 	// Initalize authentication data
-	middleware.InitAuthentication(configuration)
+	middleware.InitAuthentication(configuration.Authentication)
 
 	// Set up server
 	r := gin.Default()

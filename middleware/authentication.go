@@ -63,17 +63,14 @@ func init() {
 
 // InitAuthentication initializes authentication configuration that has
 // to be read in from config files
-func InitAuthentication(c configs.Configuration) {
-	clientConfig := c.Client
-	googleOauthConfig.ClientID = clientConfig.ID
-	googleOauthConfig.ClientSecret = clientConfig.Secret
-
-	authenticationConfig := c.Authentication
+func InitAuthentication(c configs.AuthenticationConfiguration) {
+	googleOauthConfig.ClientID = c.ID
+	googleOauthConfig.ClientSecret = c.Secret
+	googleAccountURL = fmt.Sprintf(googleAccountURL, c.Accounts)
 	googleOauthConfig.Endpoint = oauth2.Endpoint{
-		AuthURL:  fmt.Sprintf("%s/o/oauth2/auth", authenticationConfig.Oauth2),
-		TokenURL: fmt.Sprintf("%s/o/oauth2/token", authenticationConfig.Oauth2),
+		AuthURL:  fmt.Sprintf("%s/o/oauth2/auth", c.Oauth2),
+		TokenURL: fmt.Sprintf("%s/o/oauth2/token", c.Oauth2),
 	}
-	googleAccountURL = fmt.Sprintf(googleAccountURL, authenticationConfig.Accounts)
 }
 
 // RegisterAuthenticationRoutes adds the authentication routes
