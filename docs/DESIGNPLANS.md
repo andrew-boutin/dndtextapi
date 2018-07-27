@@ -4,6 +4,8 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Features
 
+- Default to int for config file (no env var set)
+- QueryParamExtractor no error. QueryParamExtractorRequired error.
 - CI `make all` works: ENV_VARS etc.
 - Variable callback url so UI can get the callback (query param to /login?callback=...)
 - User last login
@@ -31,7 +33,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- Clean up travis commit history
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md
 - CI build not running app correctly - may have to change postgresql port mapping...

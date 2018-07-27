@@ -33,6 +33,8 @@ const (
 	userContextKey = "USER_CONTEXT_KEY"
 
 	cookieName = "dndtextapisession"
+
+	callbackQueryParam = "callback"
 )
 
 var googleAccountURL = "%s/oauth2/v2/userinfo?access_token="
@@ -82,10 +84,24 @@ func RegisterAuthenticationRoutes(r *gin.Engine) {
 	r.GET("/callback", CallbackHandler)
 }
 
-// LoginHandler handles redirecting the User to Google for authentication
+// LoginHandler handles redirecting the User to Google for authentication. An
+// optional query parameter can change the callback URL to use.
 func LoginHandler(c *gin.Context) {
+	callbackFromQuery, err := QueryParamExtractor(c, callbackQueryParam)
+	if err != nil && err != ErrQueryParamNotFound {
+		log.WithError(err).Errorf("Error extracting optional query parameter %s", callbackFromQuery)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	goc := googleOauthConfig
+	// The caller defined a different callback URL to use
+	if callbackFromQuery != "" {
+		goc.RedirectURL = callbackFromQuery
+	}
+
 	oauthStateString := uniuri.New()
-	url := googleOauthConfig.AuthCodeURL(oauthStateString)
+	url := goc.AuthCodeURL(oauthStateString)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
