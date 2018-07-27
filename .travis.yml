@@ -8,9 +8,10 @@ services:
 
 env:
   COMPOSE_VERSION: 1.18.0
+  DNDTEXTAPI_ENV: "int"
 
 before_install:
-  # Get the version fo compose that we want
+  # Get the version of compose that we want
   - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin

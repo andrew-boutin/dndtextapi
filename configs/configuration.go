@@ -3,6 +3,7 @@
 package configs
 
 import (
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -21,9 +22,13 @@ type Configuration struct {
 // objects and returns the top level configuration.
 func LoadConfig() (configuration Configuration) {
 	// TODO: What about pflags?
-	// TODO: What about env vars?
-	// TODO: ENV_VAR to specify which config file to use? viper.SetConfigName("config")
-	viper.SetConfigName("config-int")
+	// Use the DNDTEXTAPI_ENV variable to determine which config file to load up
+	viper.SetEnvPrefix("DNDTEXTAPI")
+	viper.BindEnv("ENV")
+	env := viper.Get("ENV")
+
+	// Load the config file and use it to populate the config structs
+	viper.SetConfigName(fmt.Sprintf("config-%s", env))
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
 		log.WithError(err).Fatal("Error reading config file.")

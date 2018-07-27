@@ -16,7 +16,15 @@ Postgresql used for the DB.
 
 Docker and docker-compose used for containerization.
 
+Google for Oauth2 authentication.
+
 Make for commands. See [`Makefile`](Makefile).
+
+Python for containerized integration tests.
+
+Mock-server for containerized mock authentication server.
+
+Python mock-server client for setup between integration tests and mock authentication server.
 
 ## Running
 

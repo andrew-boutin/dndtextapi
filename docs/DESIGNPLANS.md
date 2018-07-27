@@ -31,12 +31,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-Related to travis automation
-- Env var to specify environment: prod (production), int (travis) determines which config file to load
-- Document setting env variable / production config file etc.
 - Clean up travis commit history
-
-
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md
 - CI build not running app correctly - may have to change postgresql port mapping...

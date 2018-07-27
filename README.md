@@ -4,8 +4,6 @@
 
 DnD Text API is a Golang REST API for a DnD style text adventure site.
 
-Authentication is integrated with Google.
-
 See the [design](docs/DESIGN.md) docs for more info such as the [available endpoints](docs/DESIGN.md#endpoints).
 
 ## Running
