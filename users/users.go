@@ -18,6 +18,7 @@ type User struct {
 	ID          int
 	IsAdmin     bool
 	IsBanned    bool
+	LastLogin   time.Time
 	CreatedOn   time.Time
 	LastUpdated time.Time
 }

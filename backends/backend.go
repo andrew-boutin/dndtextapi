@@ -43,6 +43,7 @@ type Backend interface {
 	GetUserByID(int) (*users.User, error)
 	CreateUser(*users.GoogleUser) (*users.User, error)
 	GetAllUsers() (*users.UserCollection, error)
+	UpdateUserLastLogin(*users.User) (*users.User, error)
 }
 
 // InitBackend initializes whatever backend matches the provided

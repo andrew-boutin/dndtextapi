@@ -102,9 +102,11 @@ func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollect
 	builder := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable)
+
 	if isPrivate != nil {
 		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
 	}
+
 	sql, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err

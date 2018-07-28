@@ -7,6 +7,7 @@ CREATE TABLE users (
     username varchar(30) UNIQUE NOT NULL,
     email varchar(30) UNIQUE NOT NULL,
     bio varchar(200) NOT NULL default '',
+    lastlogin timestamp default current_timestamp,
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp
 );

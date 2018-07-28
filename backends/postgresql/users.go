@@ -4,6 +4,7 @@ package postgresql
 
 import (
 	"fmt"
+	"time"
 
 	sqlP "database/sql"
 
@@ -23,6 +24,7 @@ var userColumns = []string{
 	"bio",
 	"isadmin",
 	"isbanned",
+	"lastlogin",
 	"createdon",
 	"lastupdated",
 }
@@ -38,7 +40,7 @@ func init() {
 // the provided ID.
 func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) {
 	sql, args, err := PSQLBuilder().
-		Select("id", "username", "email", "bio", "isadmin", "isbanned", "users.createdon", "users.lastupdated").
+		Select(userColumns...).
 		From(usersTable).
 		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, usersTable, channelsUsersTable)). // TODO: Is this an inner join?
 		Where(sq.Eq{"channelid": id}).
@@ -52,9 +54,8 @@ func (backend Backend) GetUsersInChannel(id int) (*users.UserCollection, error) 
 
 // GetAllUsers retrieves all Users from the database - including their User.IsAdmin flag.
 func (backend Backend) GetAllUsers() (*users.UserCollection, error) {
-	selects := []string{"id", "username", "email", "bio", "isadmin", "isbanned", "users.createdon", "users.lastupdated"}
 	sql, args, err := PSQLBuilder().
-		Select(selects...).
+		Select(userColumns...).
 		From(usersTable).
 		ToSql()
 	if err != nil {
@@ -94,7 +95,6 @@ func (backend Backend) AddUsersToChannel(channelID int, userIDs []int) error {
 		return nil
 	}
 
-	// TODO: unique constraint on channelid/userid
 	builder := PSQLBuilder().
 		Insert(channelsUsersTable).
 		Columns("channelid", "userid")
@@ -181,7 +181,7 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		Update(usersTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -261,7 +261,7 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 		Insert(usersTable).
 		Columns("username", "email").
 		Values(gu.Email, gu.Email).
-		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, createdon, lastupdated"). // TODO: Use userColumns...
+		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use userColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create user sql.")
@@ -276,4 +276,28 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 	}
 
 	return newUser, nil
+}
+
+// UpdateUserLastLogin sets the passed in User's last login time to now.
+func (backend Backend) UpdateUserLastLogin(u *users.User) (*users.User, error) {
+	setMap := map[string]interface{}{
+		"lastlogin": time.Now(),
+	}
+	sql, args, err := PSQLBuilder().
+		Update(usersTable).
+		SetMap(setMap).
+		Where(sq.Eq{"id": u.ID}).
+		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use messageColumns...
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	updatedUser := &users.User{}
+	err = backend.db.QueryRowx(sql, args...).StructScan(updatedUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedUser, nil
 }

@@ -206,12 +206,14 @@ func createUserSession(c *gin.Context, email string) error {
 // getOrCreateUser attempts to lookup a User in the database and creates a new one if one
 // doesn't already exist.
 func getOrCreateUser(dbBackend backends.Backend, gu *users.GoogleUser) (user *users.User, err error) {
-	// TODO: Move this logic into a backend function so it can also handle updating lastlogin
 	// Attempt to look up the Google User in the database
 	user, err = dbBackend.GetUserByEmail(gu.Email)
 	if err == users.ErrUserNotFound {
 		// Create a new User in the database for this new Google profile
 		user, err = dbBackend.CreateUser(gu)
+	} else if err == nil {
+		// User already existed so update their last login time stamp
+		user, err = dbBackend.UpdateUserLastLogin(user)
 	}
 	return
 }
