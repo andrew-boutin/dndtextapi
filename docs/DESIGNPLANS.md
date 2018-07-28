@@ -4,10 +4,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Features
 
-- Default to int for config file (no env var set)
-- QueryParamExtractor no error. QueryParamExtractorRequired error.
 - CI `make all` works: ENV_VARS etc.
-- Variable callback url so UI can get the callback (query param to /login?callback=...)
 - User last login
   - Have `getOrCreateUser` be a db backend call so it knows to update last_login if User already exists.
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
@@ -33,11 +30,10 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
+- Default to int for config file (no env var set)
+- QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md
-- CI build not running app correctly - may have to change postgresql port mapping...
-- CI fail build on failed tests
-- Env var or something similiar to choose what config file to use - default to testing
 - Get around having to rebuild docker images (map volume on startup or something etc.)
 - 403 instead of 401 in many places
 - Context err body in JSON format. One liner?

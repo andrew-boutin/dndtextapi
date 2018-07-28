@@ -99,11 +99,13 @@ func (backend Backend) GetChannelsUserIsMember(userID int, isPrivate *bool) (*ch
 // GetAllChannels returns a list of all Channels if the isPrivate flag is nil. If the flag is set then only
 // private Channels are returned. If the flag is not set then only public Channels are returned.
 func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollection, error) {
-	// TODO: Nil isPrivate = no Where, true means only private channels, false means only public channels
-	sql, args, err := PSQLBuilder().
+	builder := PSQLBuilder().
 		Select(channelColumns...).
-		From(channelsTable).
-		ToSql()
+		From(channelsTable)
+	if isPrivate != nil {
+		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
+	}
+	sql, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
