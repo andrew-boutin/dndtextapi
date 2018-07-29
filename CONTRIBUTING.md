@@ -28,7 +28,7 @@ Python mock-server client for setup between integration tests and mock authentic
 
 ## Running
 
-Running anything outside of Docker, such as unit tests, will require running `govendor sync` first.
+Running anything outside of Docker, such as unit tests, will require running `make fetchdeps` first.
 
 Start or stop the db and server:
 

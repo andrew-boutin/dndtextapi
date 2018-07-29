@@ -26,7 +26,9 @@ script:
   # stop postgresql since it's already running by default to free up port 5432
   - echo manual | sudo tee /etc/init/postgresql.override
   - sudo service postgresql stop
+  # Install external dependencies
   - make fetchdeps
+  # Run unit tests, other Go testing, and finally the integration tests
   - make all inttests
 
 notifications:

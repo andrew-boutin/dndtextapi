@@ -45,9 +45,8 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Beef up design doc (especially authentication)
 - `wait-for-it.sh` in single place.
 - db column names use `_` between words
-- Separate schema for sample data
+- Separate file for sample data
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
-- Make commands required to run after adding a new dependency...
 
 ### Admin routes session issue
 
