@@ -1,6 +1,6 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
-.PHONY: all up down reapp test fmt lint vet updatedeps installdeps inttests
+.PHONY: all up down reapp test fmt lint vet updatedeps installdeps inttests fetchdeps
 
 all: down test vet lint fmt up
 
@@ -36,9 +36,13 @@ fmt:
 updatedeps:
 	@$(GOVENDOR_PATH) update +v
 
-# Use govendor to install the dependencies listedin vendor/vendor.json
+# Use govendor to install the dependencies listed in vendor/vendor.json
 installdeps:
 	@$(GOVENDOR_PATH) install
+
+# Use govendor to fetch the dependencies listed in vendor/vendor.json
+fetchdeps:
+	@$(GOVENDOR_PATH) fetch +out
 
 # Run the integration tests
 inttests:

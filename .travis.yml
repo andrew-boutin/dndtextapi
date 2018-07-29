@@ -9,19 +9,24 @@ services:
 env:
   COMPOSE_VERSION: 1.18.0
   DNDTEXTAPI_ENV: "int"
+  GOVENDOR_PATH: govendor
+  GOLINT_PATH: golint
 
 before_install:
   # Get the version of compose that we want
   - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
+  # Install Go packages
+  - go get -u github.com/kardianos/govendor
 
 script:
   # Source https://discuss.circleci.com/t/how-to-permanently-shutdown-circleci-default-postgres-mongodb-etc/7329/10
   # stop postgresql since it's already running by default to free up port 5432
   - echo manual | sudo tee /etc/init/postgresql.override
   - sudo service postgresql stop
-  - make up inttests
+  - make fetchdeps
+  - make all inttests
 
 notifications:
   email: false
