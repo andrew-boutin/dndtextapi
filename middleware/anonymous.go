@@ -22,13 +22,13 @@ func RegisterAnonymousRoutes(r *gin.Engine) {
 func GetPublicChannels(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 	isPrivate := false
-	channels, err := dbBackend.GetAllChannels(&isPrivate)
+	publicChannels, err := dbBackend.GetAllChannels(&isPrivate)
 	if err != nil {
 		log.WithError(err).Error("Failed to get public channels.")
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, channels)
+	c.JSON(http.StatusOK, publicChannels)
 }
 
 // GetPublicChannel retrieves the Channel specified by the id in the

@@ -59,12 +59,12 @@ func GetUsersInChannel(c *gin.Context) {
 		}
 	}
 
-	users, err := dbBackend.GetUsersInChannel(channelID)
+	usersInChannel, err := dbBackend.GetUsersInChannel(channelID)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, usersInChannel)
 }
 
 // GetUser retrieves the User matching the id in the path.

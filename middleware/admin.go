@@ -46,14 +46,14 @@ func RequireAdminHandler(c *gin.Context) {
 func AdminGetChannels(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	channels, err := dbBackend.GetAllChannels(nil)
+	allChannels, err := dbBackend.GetAllChannels(nil)
 	if err != nil {
 		log.WithError(err).Error("Failed to retrieve all channels.")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, channels)
+	c.JSON(http.StatusOK, allChannels)
 }
 
 // AdminGetChannel retrieves the Channel matching the id
@@ -145,14 +145,14 @@ func AdminGetMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := dbBackend.GetMessagesInChannel(channelID, nil)
+	allMessages, err := dbBackend.GetMessagesInChannel(channelID, nil)
 	if err != nil {
 		// TODO: Channel not found 404?
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, messages)
+	c.JSON(http.StatusOK, allMessages)
 }
 
 // AdminGetMessage retrieves the Message matching the id
@@ -236,14 +236,14 @@ func AdminDeleteMessage(c *gin.Context) {
 func AdminGetUsers(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	users, err := dbBackend.GetAllUsers()
+	allUsers, err := dbBackend.GetAllUsers()
 	if err != nil {
 		log.WithError(err).Error("Failed to retrieve all users.")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, allUsers)
 }
 
 // AdminGetUser retrieves the User matching the id in the
