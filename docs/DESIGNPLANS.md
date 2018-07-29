@@ -4,7 +4,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Features
 
-- CI `make all` works: ENV_VARS etc.
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
 - *Owner invite user to channel / User accept invitation
   - "invitation": foruserid, fromuserid, note, channelid, createdon, lastupdated

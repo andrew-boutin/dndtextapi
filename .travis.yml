@@ -19,6 +19,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   # Install Go packages
   - go get -u github.com/kardianos/govendor
+  - go get -u golang.org/x/lint/golint
 
 script:
   # Source https://discuss.circleci.com/t/how-to-permanently-shutdown-circleci-default-postgres-mongodb-etc/7329/10
