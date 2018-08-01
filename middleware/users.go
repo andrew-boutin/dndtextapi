@@ -5,7 +5,6 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/andrew-boutin/dndtextapi/channels"
 	"github.com/andrew-boutin/dndtextapi/users"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -14,57 +13,9 @@ import (
 // RegisterUsersRoutes registers all of the Users routes with their
 // associated middleware.
 func RegisterUsersRoutes(g *gin.RouterGroup) {
-	g.GET("/users", RequiredHeadersMiddleware(acceptHeader), GetUsersInChannel)
 	g.GET("/users/:id", RequiredHeadersMiddleware(acceptHeader), GetUser)
 	g.PUT("/users/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateUser)
 	g.DELETE("/users/:id", DeleteUser)
-}
-
-// GetUsersInChannel retrieves all of the Users who are members of the Channel
-// matching the required query parameter channelID.
-func GetUsersInChannel(c *gin.Context) {
-	user := GetAuthenticatedUser(c)
-	dbBackend := GetDBBackend(c)
-
-	channelID, err := QueryParamAsIntExtractor(c, "channelID")
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	channel, err := dbBackend.GetChannel(channelID)
-	if err != nil {
-		if err == channels.ErrChannelNotFound {
-			c.AbortWithError(http.StatusNotFound, err)
-			return
-		}
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	// Private Channels require that the User be a member to get the
-	// membership list.
-	var isMember bool
-	if channel.IsPrivate {
-		isMember, err = dbBackend.IsUserInChannel(user.ID, channelID)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		// User is not a member of the Channel so deny access
-		if !isMember {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-	}
-
-	usersInChannel, err := dbBackend.GetUsersInChannel(channelID)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	c.JSON(http.StatusOK, usersInChannel)
 }
 
 // GetUser retrieves the User matching the id in the path.

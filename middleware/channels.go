@@ -5,7 +5,9 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/andrew-boutin/dndtextapi/backends"
 	"github.com/andrew-boutin/dndtextapi/channels"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,9 +17,9 @@ import (
 func RegisterChannelsRoutes(g *gin.RouterGroup) {
 	g.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetChannels)
 	g.POST("/channels", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateChannel)
-	g.GET("/channels/:id", RequiredHeadersMiddleware(acceptHeader), GetChannel)
-	g.PUT("/channels/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateChannel)
-	g.DELETE("/channels/:id", DeleteChannel)
+	g.GET("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), GetChannel)
+	g.PUT("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateChannel)
+	g.DELETE("/channels/:channelID", DeleteChannel)
 }
 
 // GetChannels retrieves a list of Channels that the authenticated User has access
@@ -39,30 +41,14 @@ func GetChannels(c *gin.Context) {
 	}
 
 	// Get the Channels dependent on the query parameter
-	var outChannels *channels.ChannelCollection
+	var outChannels channels.ChannelCollection
 	switch level {
 	case ownerLevel:
 		outChannels, err = dbBackend.GetChannelsOwnedByUser(user.ID)
 	case memberLevel:
-		outChannels, err = dbBackend.GetChannelsUserIsMember(user.ID, nil)
+		outChannels, err = GetChannelsUserIsMember(dbBackend, user.ID)
 	default:
-		isPrivate := false
-		var publicChannels, privateMemberChannels *channels.ChannelCollection
-		publicChannels, err = dbBackend.GetAllChannels(&isPrivate)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		isPrivate = true
-		privateMemberChannels, err = dbBackend.GetChannelsUserIsMember(user.ID, &isPrivate)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		usersChannels := append(*publicChannels, *privateMemberChannels...)
-		outChannels = &usersChannels
+		outChannels, err = GetChannelsUserCanAccess(dbBackend, user.ID)
 	}
 
 	if err != nil {
@@ -77,7 +63,7 @@ func GetChannel(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -96,7 +82,7 @@ func GetChannel(c *gin.Context) {
 	// Private Channels require that the User is a member to access
 	var userInChannel bool
 	if channel.IsPrivate == true {
-		userInChannel, err = dbBackend.IsUserInChannel(user.ID, channelID)
+		userInChannel, err = dbBackend.DoesUserHaveCharacterInChannel(user.ID, channelID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -135,13 +121,6 @@ func CreateChannel(c *gin.Context) {
 		return
 	}
 
-	// Add the authenticated User as a Channel member
-	err = dbBackend.AddUserToChannel(user.ID, createdChannel.ID)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
 	c.JSON(http.StatusCreated, createdChannel)
 }
 
@@ -150,7 +129,7 @@ func DeleteChannel(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -188,7 +167,7 @@ func UpdateChannel(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -224,4 +203,75 @@ func UpdateChannel(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updatedChannel)
+}
+
+// GetChannelsUserIsMember finds all of the Channels that the User is a member of which
+// means any Channel that the User has a Character in or owns.
+func GetChannelsUserIsMember(dbBackend backends.Backend, userID int) (channels.ChannelCollection, error) {
+	// User is considered a member of any Channel that they own
+	ownedChannels, err := dbBackend.GetChannelsOwnedByUser(userID)
+	if err != nil {
+		log.WithError(err).Error("Failed to look up channels owned by user.")
+		return nil, err
+	}
+
+	// Find all Channels that the User has a Character in
+	charChannels, err := dbBackend.GetChannelsUserHasCharacterIn(userID, nil)
+	if err != nil {
+		log.WithError(err).Error("Failed to look up channels that user has a character in.")
+		return nil, err
+	}
+
+	return concatUniqueChannels(ownedChannels, charChannels), nil
+}
+
+// GetChannelsUserCanAccess finds all Channels that a User has access to. This includes all public Channels,
+// any private Channels that they have a Character in, and also any Channels that they own.
+func GetChannelsUserCanAccess(dbBackend backends.Backend, userID int) (channels.ChannelCollection, error) {
+	// Look up all public channels
+	isPrivate := false
+	publicChannels, err := dbBackend.GetAllChannels(&isPrivate)
+	if err != nil {
+		log.WithError(err).Error("Failed to look up public channels.")
+		return nil, err
+	}
+
+	// Look up private Channels that the User has a Character in
+	isPrivate = true
+	charChannels, err := dbBackend.GetChannelsUserHasCharacterIn(userID, &isPrivate)
+	if err != nil {
+		log.WithError(err).Error("Failed to look up channels that user has a character in.")
+		return nil, err
+	}
+
+	// Should be no intersection between public Channels and private Channels where there is a Character
+	outChannels := append(publicChannels, charChannels...)
+
+	// Look up channels owned by User
+	ownedChannels, err := dbBackend.GetChannelsOwnedByUser(userID)
+	if err != nil {
+		log.WithError(err).Error("Failed to look up channels owned by user.")
+		return nil, err
+	}
+
+	// Could be overlap between the Channels found previously and the Channels that are owned
+	outChannels = concatUniqueChannels(outChannels, ownedChannels)
+	return outChannels, nil
+}
+
+func concatUniqueChannels(cca channels.ChannelCollection, ccb channels.ChannelCollection) (newCC channels.ChannelCollection) {
+	m := make(map[int]*channels.Channel)
+	tmpCC := append(cca, ccb...)
+
+	for _, c := range tmpCC {
+		if _, ok := m[c.ID]; !ok {
+			m[c.ID] = c
+		}
+	}
+
+	for _, v := range m {
+		newCC = append(newCC, v)
+	}
+
+	return newCC
 }

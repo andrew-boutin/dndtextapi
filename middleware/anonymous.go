@@ -13,8 +13,8 @@ import (
 func RegisterAnonymousRoutes(r *gin.Engine) {
 	g := r.Group("/public")
 	g.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetPublicChannels)
-	g.GET("/channels/:id", RequiredHeadersMiddleware(acceptHeader), GetPublicChannel)
-	g.GET("/messages", RequiredHeadersMiddleware(acceptHeader), GetStoryMessagesInChannel)
+	g.GET("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), GetPublicChannel)
+	g.GET("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetStoryMessagesInChannel)
 }
 
 // GetPublicChannels retrieves all of the public Channels accessible
@@ -36,7 +36,7 @@ func GetPublicChannels(c *gin.Context) {
 func GetPublicChannel(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -68,32 +68,16 @@ func GetPublicChannel(c *gin.Context) {
 // query parameter channelID
 func GetStoryMessagesInChannel(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
+	channel := c.MustGet(channelKey).(*channels.Channel)
 
-	channelID, err := QueryParamAsIntExtractor(c, channelIDQueryParam)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	existingChannel, err := dbBackend.GetChannel(channelID)
-	if err != nil {
-		if err == channels.ErrChannelNotFound {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
-		}
-		// TODO: Maybe 400 if the channel id is bad
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if existingChannel.IsPrivate {
-		log.WithError(err).Error("Anonymous User attempting to look up messages from private channel denying access.")
+	if channel.IsPrivate {
+		log.Error("Anonymous User attempting to look up messages from private channel denying access.")
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
 	onlyStoryMsgs := true
-	messages, err := dbBackend.GetMessagesInChannel(channelID, &onlyStoryMsgs)
+	messages, err := dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
 	if err != nil {
 		log.WithError(err).Error("Failed to get story messages for public channel.")
 		c.AbortWithStatus(http.StatusInternalServerError)

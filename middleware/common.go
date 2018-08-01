@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/andrew-boutin/dndtextapi/backends"
+	"github.com/andrew-boutin/dndtextapi/channels"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,16 +20,17 @@ const (
 
 	// Context keys
 	dbBackendKey = "dbBackendKey"
+	channelKey   = "channelKey"
+	characterKey = "characterKey"
 
 	// Other
 	applicationJSONHeaderVal = "application/json"
 	idPathParam              = "id"
+	channelIDPathParam       = "channelID"
 )
 
 // Query parameters and their valid values
 const (
-	channelIDQueryParam = "channelID"
-
 	// TODO: Find a better way to set these up
 	// msgTypeQueryParam can be `story` or `meta`.
 	msgTypeQueryParam = "msgType"
@@ -75,6 +77,7 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	RegisterChannelsRoutes(authorized)
 	RegisterUsersRoutes(authorized)
 	RegisterMessagesRoutes(authorized)
+	RegisterCharactersRoutes(authorized)
 
 	// Set up all of the admin only routes
 	admin := authorized.Group("/") // TODO: want this to be `/admin`
@@ -188,4 +191,31 @@ func QueryParamAsIntExtractor(c *gin.Context, name string) (int, error) {
 	}
 
 	return pInt, nil
+}
+
+// LoadChannelFromPathID attempts to lookup the Channel using the Channel ID in the path and stores it
+// in the context so the later middleware doesn't have to do it.
+func LoadChannelFromPathID(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
+	if err != nil {
+		log.WithError(err).Error("Failed to get channel id from path.")
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	channel, err := dbBackend.GetChannel(channelID)
+	if err != nil {
+		if err == channels.ErrChannelNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+
+		log.WithError(err).WithField("channelID", channelID).Error("Failed look up channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Set(channelKey, channel)
 }

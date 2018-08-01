@@ -24,17 +24,20 @@ CREATE TABLE channels (
     lastupdated timestamp default current_timestamp
 );
 
--- Mapping table to determine which users are in what channels
-CREATE TABLE channels_users (
-    channelid bigserial references channels(id),
+CREATE TABLE characters (
+    id bigserial primary key,
     userid bigserial references users(id),
+    channelid bigserial references channels(id),
+    name varchar(30) NOT NULL default '',
+    description text NOT NULL default '',
     createdon timestamp default current_timestamp,
-    UNIQUE (channelid, userid)
+    lastupdated timestamp default current_timestamp,
+    UNIQUE (name, channelid)
 );
 
 CREATE TABLE messages (
     id bigserial primary key,
-    userid bigserial references users(id),
+    characterid bigserial references characters(id),
     channelid bigserial references channels(id),
     content varchar(200) NOT NULL,
     isstory boolean NOT NULL,
@@ -45,6 +48,7 @@ CREATE TABLE messages (
 -- Use function provided from functions.sql to handle updating lastmodified timestamps on updates
 CREATE TRIGGER users_updated_at_modtime BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER channels_updated_at_modtime BEFORE UPDATE ON channels FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+CREATE TRIGGER characters_updated_at_modtime BEFORE UPDATE ON characters FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 
 -- Sample data
@@ -60,13 +64,13 @@ INSERT INTO channels
 (1, 1, 'my public channel', 'my public channel description', 'some topic', false),
 (1, 1, 'my private channel', 'my private channel description', '', true);
 
-INSERT INTO channels_users
-(channelid, userid) VALUES
-(1, 1),
-(2, 1);
+INSERT INTO characters
+(userid, channelid, name, description) VALUES
+(1, 1, 'character1', 'character1...'),
+(1, 2, 'character2', 'character2...');
 
 INSERT INTO messages
-(userid, channelid, content, isStory) VALUES
+(characterid, channelid, content, isStory) VALUES
 (1, 1, 'message one story public channel', true),
 (1, 1, 'messsage two meta public channel', false),
 (1, 2, 'message one story private channel', true),

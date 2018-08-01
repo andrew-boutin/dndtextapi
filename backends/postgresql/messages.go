@@ -15,7 +15,7 @@ const messagesTable = "messages"
 
 var messageColumns = []string{
 	"id",
-	"userid",
+	"characterid",
 	"channelid",
 	"content",
 	"isstory",
@@ -34,7 +34,7 @@ func init() {
 // for the given Channel by ID. If onlyStory is nil then both msgType are returned.
 // If onlyStory is set then only story Messages are returned. Otherwise only meta
 // Messages are retrieved.
-func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (*messages.MessageCollection, error) {
+func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (messages.MessageCollection, error) {
 	builder := PSQLBuilder().
 		Select(messageColumns...).
 		From(messagesTable).
@@ -62,19 +62,19 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (*me
 			return nil, err
 		}
 
-		outMessages = append(outMessages, message)
+		outMessages = append(outMessages, &message)
 	}
 
-	return &outMessages, nil
+	return outMessages, nil
 }
 
 // CreateMessage creates a new Message in the database using the provided data.
 func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, error) {
 	sql, args, err := PSQLBuilder().
 		Insert(messagesTable).
-		Columns("userid", "channelid", "content").
-		Values(m.UserID, m.ChannelID, m.Content).
-		Suffix("RETURNING id, userid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
+		Columns("characterid", "channelid", "content").
+		Values(m.CharacterID, m.ChannelID, m.Content).
+		Suffix("RETURNING id, characterid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create message sql.")
@@ -168,7 +168,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		Update(messagesTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, userid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix("RETURNING id, characterid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
 		ToSql()
 	if err != nil {
 		return nil, err

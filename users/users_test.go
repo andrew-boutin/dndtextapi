@@ -21,12 +21,12 @@ func TestGetUserIDs(t *testing.T) {
 		},
 		{
 			desc:     "Single user returns slice with single id",
-			uc:       UserCollection{User{ID: 1}},
+			uc:       UserCollection{&User{ID: 1}},
 			expected: []int{1},
 		},
 		{
 			desc:     "Multiple users returns slice with the user ids",
-			uc:       UserCollection{User{ID: 1}, User{ID: 2}},
+			uc:       UserCollection{&User{ID: 1}, &User{ID: 2}},
 			expected: []int{1, 2},
 		},
 	}

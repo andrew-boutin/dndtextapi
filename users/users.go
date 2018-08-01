@@ -24,7 +24,7 @@ type User struct {
 }
 
 // UserCollection is a slice of Users.
-type UserCollection []User
+type UserCollection []*User
 
 // GetUserIDs retrieves a slice of just the User IDs in the collection
 // of Users.

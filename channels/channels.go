@@ -24,5 +24,4 @@ type Channel struct {
 }
 
 // ChannelCollection is a collection of channels
-// TODO: Should this be a collection of pointers..?
-type ChannelCollection []Channel
+type ChannelCollection []*Channel

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/andrew-boutin/dndtextapi/channels"
+	"github.com/andrew-boutin/dndtextapi/characters"
 	"github.com/andrew-boutin/dndtextapi/messages"
 
 	"github.com/andrew-boutin/dndtextapi/users"
@@ -14,13 +15,13 @@ import (
 // RegisterAdminRoutes adds the admin routes.
 func RegisterAdminRoutes(g *gin.RouterGroup) {
 	// Routes to admin channels
-	g.GET("/test", RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)
-	g.GET("/admin/channels/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetChannel)
-	g.PUT("/admin/channels/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateChannel)
-	g.DELETE("/admin/channels/:id", AdminDeleteChannel)
+	g.GET("/admin/channels", RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)
+	g.GET("/admin/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), AdminGetChannel)
+	g.PUT("/admin/channels/:channelID", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateChannel)
+	g.DELETE("/admin/channels/:channelID", AdminDeleteChannel)
 
 	// Routes to admin messages
-	g.GET("/admin/messages", RequiredHeadersMiddleware(acceptHeader), AdminGetMessages)
+	g.GET("/admin/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, AdminGetMessages)
 	g.GET("/admin/messages/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetMessage)
 	g.PUT("/admin/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateMessage)
 	g.DELETE("/admin/messages/:id", AdminDeleteMessage)
@@ -30,6 +31,12 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.GET("/admin/users/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetUser)
 	g.PUT("/admin/users/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateUser)
 	g.DELETE("/admin/users/:id", AdminDeleteUser)
+
+	// Routes to admin Characters
+	g.GET("/admin/channels/:channelID/characters", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, AdminGetCharacters)
+	g.GET("/admin/characters/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetCharacter)
+	g.PUT("/admin/characters/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateCharacter)
+	g.DELETE("/admin/characters/:id", AdminDeleteCharacter)
 }
 
 // RequireAdminHandler requires that the authenticated User be an admin or else
@@ -61,7 +68,7 @@ func AdminGetChannels(c *gin.Context) {
 func AdminGetChannel(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -86,7 +93,7 @@ func AdminGetChannel(c *gin.Context) {
 func AdminUpdateChannel(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -113,7 +120,7 @@ func AdminUpdateChannel(c *gin.Context) {
 func AdminDeleteChannel(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
 
-	channelID, err := PathParamAsIntExtractor(c, idPathParam)
+	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -138,16 +145,11 @@ func AdminDeleteChannel(c *gin.Context) {
 // channelID.
 func AdminGetMessages(c *gin.Context) {
 	dbBackend := GetDBBackend(c)
+	channel := c.MustGet(channelKey).(*channels.Channel)
 
-	channelID, err := QueryParamAsIntExtractor(c, channelIDQueryParam)
+	allMessages, err := dbBackend.GetMessagesInChannel(channel.ID, nil)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	allMessages, err := dbBackend.GetMessagesInChannel(channelID, nil)
-	if err != nil {
-		// TODO: Channel not found 404?
+		log.WithError(err).Error("Failed to look up messages for channel.")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -224,7 +226,7 @@ func AdminDeleteMessage(c *gin.Context) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
-		log.WithError(err).Error("Failed to retrieve message.")
+		log.WithError(err).Error("Failed to delete message.")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -350,6 +352,100 @@ func AdminDeleteUser(c *gin.Context) {
 			return
 		}
 		log.WithError(err).Error("Failed to retrieve user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// AdminGetCharacters retrieves all of the Characters that
+// match the Channel ID in the path.
+func AdminGetCharacters(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+	channel := c.MustGet(channelKey).(*channels.Channel)
+
+	allChars, err := dbBackend.GetCharactersInChannel(channel.ID)
+	if err != nil {
+		log.WithError(err).Error("Failed to get characters from channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, allChars)
+}
+
+// AdminGetCharacter retrieves the Character that matches
+// the id in the path.
+func AdminGetCharacter(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+
+	charID, err := PathParamAsIntExtractor(c, idPathParam)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	char, err := dbBackend.GetCharacter(charID)
+	if err != nil {
+		if err == characters.ErrCharacterNotFound {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		log.WithError(err).Error("Failed to retrieve character.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, char)
+}
+
+// AdminUpdateCharacter updates the Character matching the id in
+// the path using the data from the request body.
+func AdminUpdateCharacter(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+
+	charID, err := PathParamAsIntExtractor(c, idPathParam)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	char := &characters.Character{}
+	err = c.Bind(char)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	updatedChar, err := dbBackend.UpdateCharacter(charID, char)
+	if err != nil {
+		log.WithError(err).Error("Failed to update character.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedChar)
+}
+
+// AdminDeleteCharacter deletes the Character matching the id from
+// the path.
+func AdminDeleteCharacter(c *gin.Context) {
+	dbBackend := GetDBBackend(c)
+
+	charID, err := PathParamAsIntExtractor(c, idPathParam)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	err = dbBackend.DeleteCharacter(charID)
+	if err != nil {
+		if err == characters.ErrCharacterNotFound {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		log.WithError(err).Error("Failed to delete character.")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

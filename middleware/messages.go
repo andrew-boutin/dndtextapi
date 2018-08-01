@@ -5,6 +5,9 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/andrew-boutin/dndtextapi/characters"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/andrew-boutin/dndtextapi/channels"
 
 	"github.com/andrew-boutin/dndtextapi/messages"
@@ -14,26 +17,20 @@ import (
 // RegisterMessagesRoutes registers all of the Message routes with their
 // associated middleware.
 func RegisterMessagesRoutes(g *gin.RouterGroup) {
-	g.GET("/messages", RequiredHeadersMiddleware(acceptHeader), GetMessages)
-	g.POST("/messages", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateMessage)
-	g.GET("/messages/:id", RequiredHeadersMiddleware(acceptHeader), GetMessage)
-	g.PUT("/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateMessage)
-	g.DELETE("/messages/:id", DeleteMessage)
+	g.GET("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetMessages)
+	g.POST("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), LoadChannelFromPathID, CreateMessage)
+	g.GET("/channels/:channelID/messages/:id", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetMessage)
+	g.PUT("/channels/:channelID/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateMessage)
+	g.DELETE("/channels/:channelID/messages/:id", DeleteMessage)
 }
 
-// GetMessages retrieves a list of Messages. The query parameter channelID is
-// required to determine which Channel to get the Messages from. The query
+// GetMessages retrieves a list of Messages from the designated Channel. The query
 // parameter msgType is optional and can be used to filter which Messages are
 // retrieved.
 func GetMessages(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
-
-	channelID, err := QueryParamAsIntExtractor(c, channelIDQueryParam)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	channel := c.MustGet(channelKey).(*channels.Channel)
 
 	msgType, err := QueryParamExtractor(c, msgTypeQueryParam)
 	if err != nil {
@@ -44,19 +41,11 @@ func GetMessages(c *gin.Context) {
 		}
 	}
 
-	existingChannel, err := dbBackend.GetChannel(channelID)
-	if err != nil {
-		// TODO: Maybe 400 if the channel id is bad
-		// TODO: What about 404
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
 	// Private Channels require that the User be a member to access any Messages
 	// Accessing any meta Messages on public Channels also requires membership
 	var isMember bool
-	if existingChannel.IsPrivate || msgType != storyMsgType {
-		isMember, err = dbBackend.IsUserInChannel(user.ID, channelID)
+	if channel.IsPrivate || msgType != storyMsgType {
+		isMember, err = dbBackend.DoesUserHaveCharacterInChannel(user.ID, channel.ID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -70,16 +59,16 @@ func GetMessages(c *gin.Context) {
 	}
 
 	var onlyStoryMsgs bool
-	var messages *messages.MessageCollection
+	var messages messages.MessageCollection
 	switch msgType {
 	case storyMsgType:
 		onlyStoryMsgs = true
-		messages, err = dbBackend.GetMessagesInChannel(channelID, &onlyStoryMsgs)
+		messages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
 	case metaMsgType:
 		onlyStoryMsgs = false
-		messages, err = dbBackend.GetMessagesInChannel(channelID, &onlyStoryMsgs)
+		messages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
 	default:
-		messages, err = dbBackend.GetMessagesInChannel(channelID, nil)
+		messages, err = dbBackend.GetMessagesInChannel(channel.ID, nil)
 	}
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -94,6 +83,7 @@ func GetMessages(c *gin.Context) {
 func GetMessage(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
+	channel := c.MustGet(channelKey).(*channels.Channel)
 
 	messageID, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
@@ -111,17 +101,11 @@ func GetMessage(c *gin.Context) {
 		return
 	}
 
-	channel, err := dbBackend.GetChannel(message.ChannelID)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
 	// Private Channels and meta Messages in public Channels require
 	// that the User is a member
 	var isMember bool
 	if channel.IsPrivate || !message.IsStory {
-		isMember, err = dbBackend.IsUserInChannel(user.ID, channel.ID)
+		isMember, err = dbBackend.DoesUserHaveCharacterInChannel(user.ID, channel.ID)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -141,7 +125,9 @@ func GetMessage(c *gin.Context) {
 // request body.
 func CreateMessage(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
-	// TODO: Validation - content not empty, etc.
+	channel := c.MustGet(channelKey).(*channels.Channel)
+
+	// TODO: Validation - content not empty, can't set user/channel ids, etc.
 	dbBackend := GetDBBackend(c)
 	message := &messages.Message{}
 	err := c.Bind(message)
@@ -150,19 +136,30 @@ func CreateMessage(c *gin.Context) {
 		return
 	}
 
-	// Verify that the User is a member of the Channel
-	isMember, err := dbBackend.IsUserInChannel(user.ID, message.ChannelID)
+	// User must own the Character that the Message is for
+	char, err := dbBackend.GetCharacter(message.CharacterID)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		if err == characters.ErrCharacterNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		log.WithError(err).Error("Failed to look up message.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	if !isMember {
-		c.AbortWithStatus(http.StatusUnauthorized)
+	if user.ID != char.UserID {
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
-	message.UserID = user.ID
+	// Character must be in the Channel the Message is for
+	if char.ChannelID != channel.ID {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	message.ChannelID = channel.ID
 
 	createdMessage, err := dbBackend.CreateMessage(message)
 	if err != nil {
@@ -177,6 +174,7 @@ func CreateMessage(c *gin.Context) {
 func DeleteMessage(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	dbBackend := GetDBBackend(c)
+	channel := c.MustGet(channelKey).(*channels.Channel)
 
 	messageID, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
@@ -190,20 +188,26 @@ func DeleteMessage(c *gin.Context) {
 			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.WithError(err).Error("Failed to look up message.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// Look up the Character the Message is from so we can check if this User owns it
+	char, err := dbBackend.GetCharacter(message.CharacterID)
+	if err != nil {
+		if err == characters.ErrCharacterNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		log.WithError(err).Error("Failed to look up character.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	// User must either have created the Message or be the Channel owner
 	// to delete the Message
-	var channel *channels.Channel
-	if message.UserID != user.ID {
-		channel, err = dbBackend.GetChannel(message.ChannelID)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
+	if char.UserID != user.ID {
 		// User didn't create the Message and isn't the Channel owner so deny access
 		if channel.OwnerID != user.ID {
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -238,12 +242,25 @@ func UpdateMessage(c *gin.Context) {
 			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.WithError(err).Error("Failed to look up message.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// Look up the Character the Message is from so we can check if this User owns it
+	char, err := dbBackend.GetCharacter(existingMessage.CharacterID)
+	if err != nil {
+		if err == characters.ErrCharacterNotFound {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		log.WithError(err).Error("Failed to look up character.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	// The User must have created the Message in order to update it
-	if existingMessage.UserID != user.ID {
+	if char.UserID != user.ID { // TODO: Check if User owns the Character tied to the Message *****
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}

@@ -14,7 +14,7 @@ var ErrMessageNotFound = fmt.Errorf("message not found")
 type Message struct {
 	ID          int
 	Content     string
-	UserID      int
+	CharacterID int
 	ChannelID   int
 	IsStory     bool
 	CreatedOn   time.Time
@@ -22,4 +22,4 @@ type Message struct {
 }
 
 // MessageCollection is a collection of messages
-type MessageCollection []Message
+type MessageCollection []*Message

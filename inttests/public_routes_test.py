@@ -46,26 +46,25 @@ class PublicRoutesTest(BaseTest):
 
     def test_get_messages_from_public_channel(self):
         """Test the public get messages route for getting messages from a channel."""
-        # Make sure not including the accept header isn't allowed
-        url = f"{self.url}/messages"
-        r = requests.get(url)
-        self.assertEqual(r.status_code, 400)
-
-        # Verify 400 when not including the required query param
-        r = requests.get(url, headers=self.read_headers)
-        self.assertEqual(r.status_code, 400)
-
-        url = f"{url}?channelID="
+        messages_url = f"{self.url}/channels/%d/messages"
 
         # Use a private channel id verify denied
-        r = requests.get(f"{url}2", headers=self.read_headers)
+        url = messages_url % 2
+        r = requests.get(url, headers=self.read_headers)
         self.assertEqual(r.status_code, 401)
 
         # Make up a channel id verify not found
-        r = requests.get(f"{url}999", headers=self.read_headers)
+        url = messages_url % 999
+        r = requests.get(url, headers=self.read_headers)
         self.assertEqual(r.status_code, 404)
 
+        # Make sure not including the accept header isn't allowed
+        url = messages_url % 1
+        r = requests.get(url)
+        self.assertEqual(r.status_code, 400)
+
         # Use a public channel for a valid request
-        r = requests.get(f"{url}1", headers=self.read_headers)
+        url = messages_url % 1
+        r = requests.get(url, headers=self.read_headers)
         self.assertEqual(r.status_code, 200)
         # TODO: assert the contents - no meta messages

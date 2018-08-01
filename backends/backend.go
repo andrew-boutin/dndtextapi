@@ -5,6 +5,7 @@ package backends
 import (
 	log "github.com/sirupsen/logrus"
 
+	"github.com/andrew-boutin/dndtextapi/characters"
 	"github.com/andrew-boutin/dndtextapi/messages"
 	"github.com/andrew-boutin/dndtextapi/users"
 
@@ -19,31 +20,36 @@ import (
 type Backend interface {
 	// Channels functionality
 	GetChannel(int) (*channels.Channel, error)
-	GetChannelsOwnedByUser(int) (*channels.ChannelCollection, error)
-	GetChannelsUserIsMember(int, *bool) (*channels.ChannelCollection, error)
-	GetAllChannels(*bool) (*channels.ChannelCollection, error)
+	GetChannelsOwnedByUser(int) (channels.ChannelCollection, error)
+	GetChannelsUserHasCharacterIn(int, *bool) (channels.ChannelCollection, error)
+	GetAllChannels(*bool) (channels.ChannelCollection, error)
 	CreateChannel(*channels.Channel, int) (*channels.Channel, error)
 	DeleteChannel(int) error
 	UpdateChannel(int, *channels.Channel) (*channels.Channel, error)
 
 	// Messages functionality
-	GetMessagesInChannel(int, *bool) (*messages.MessageCollection, error)
+	GetMessagesInChannel(int, *bool) (messages.MessageCollection, error)
 	GetMessage(int) (*messages.Message, error)
 	CreateMessage(*messages.Message) (*messages.Message, error)
 	DeleteMessage(int) error
 	UpdateMessage(int, *messages.Message) (*messages.Message, error)
 
 	// Users functionality
-	GetUsersInChannel(int) (*users.UserCollection, error)
-	IsUserInChannel(int, int) (bool, error)
-	AddUserToChannel(int, int) error
 	UpdateUser(int, *users.User) (*users.User, error)
 	DeleteUser(int) error
 	GetUserByEmail(string) (*users.User, error)
 	GetUserByID(int) (*users.User, error)
 	CreateUser(*users.GoogleUser) (*users.User, error)
-	GetAllUsers() (*users.UserCollection, error)
+	GetAllUsers() (users.UserCollection, error)
 	UpdateUserLastLogin(*users.User) (*users.User, error)
+
+	// Characters functionality
+	DoesUserHaveCharacterInChannel(int, int) (bool, error)
+	GetCharactersInChannel(channelID int) (characters.CharacterCollection, error)
+	GetCharacter(int) (*characters.Character, error)
+	CreateCharacter(*characters.Character) (*characters.Character, error)
+	DeleteCharacter(int) error
+	UpdateCharacter(int, *characters.Character) (*characters.Character, error)
 }
 
 // InitBackend initializes whatever backend matches the provided

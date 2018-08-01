@@ -5,16 +5,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 ## Features
 
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
-- *Owner invite user to channel / User accept invitation
-  - "invitation": foruserid, fromuserid, note, channelid, createdon, lastupdated
-    - Get /invitations?channelID=id retrieve all invitations for a single channel (either channel owner or in channel)
-    - Get /invitations/id retrieve single invitation (either in channel or channel owner)
-    - Post /invitations create single invitation - must be channel owner (for now)
-    - Put /invitations/id update single invitation - must have created the invitation
-    - Delete /invitations/id delete single invitation
-      - If foruserid - query param to accept or reject
-      - If created invitation just remove the invitation
-- *owner remove user from channel / user leave channel
 - *Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases (won't need every route)
 - Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
@@ -24,9 +14,16 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Swagger spec
 - DB Migrations - for CD - separate db user
 - Resource links: Self links. Collection links. (HAL) maybe https://github.com/pmoule/go2hal
+- DMID still exists in channel. -1 anyone can talk as DM. DM still needs to have a character in the channel.
+- Owner doesn't have to have a character - needs a character to send story messages though.
+- Users can have multiple Characters in a Channel.
 
 ## Fix Ups
 
+- Switch to single Character per Channel for now
+- Delete Channel has dependencies on Messages and Characters
+- Delete User has dependencies on Messages and Characters
+- Switch content-type and accept to validate if present.
 - Default to int for config file (no env var set)
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
@@ -35,7 +32,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - 403 instead of 401 in many places
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
-- Add a lot more logging (especially in all middleware right before aborting request)
+- Add a lot more logging (especially in all middleware right before aborting request w/ only status)
 - 404 consistent handling. Remove duplicate checks. Make sure everywhere supports it.
 - Notes about connecting and inspecting the database.
 - Restrict permissions for db api user.

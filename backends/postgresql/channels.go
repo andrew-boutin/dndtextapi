@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	channelsTable      = "channels"
-	channelsUsersTable = "channels_users"
+	channelsTable = "channels"
 )
 
 var channelColumns = []string{
@@ -61,7 +60,7 @@ func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 
 // GetChannelsOwnedByUser retrieves all of the Channels where the provided User ID
 // is the owner of the Channel.
-func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelCollection, error) {
+func (backend Backend) GetChannelsOwnedByUser(userID int) (channels.ChannelCollection, error) {
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
@@ -74,31 +73,9 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (*channels.ChannelColl
 	return backend.runMultiChannelQuery(sql, args)
 }
 
-// GetChannelsUserIsMember retrieves all of the Channels that the User, matching the provided
-// Usr ID, is a member of. This means every result in the Channel/User mapping table.
-// TODO: Could make a ChannelSearchStruct and put `isPrivate *bool`` in that
-func (backend Backend) GetChannelsUserIsMember(userID int, isPrivate *bool) (*channels.ChannelCollection, error) {
-	builder := PSQLBuilder().
-		Select(channelColumns...).
-		From(channelsTable).
-		Join(fmt.Sprintf("%s ON %s.id = %s.userid", channelsUsersTable, channelsTable, channelsUsersTable)). // TODO: Is this an inner join?
-		Where(sq.Eq{"userid": userID})
-
-	if isPrivate != nil {
-		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
-	}
-
-	sql, args, err := builder.ToSql()
-	if err != nil {
-		return nil, err
-	}
-
-	return backend.runMultiChannelQuery(sql, args)
-}
-
 // GetAllChannels returns a list of all Channels if the isPrivate flag is nil. If the flag is set then only
 // private Channels are returned. If the flag is not set then only public Channels are returned.
-func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollection, error) {
+func (backend Backend) GetAllChannels(isPrivate *bool) (channels.ChannelCollection, error) {
 	builder := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable)
@@ -115,7 +92,29 @@ func (backend Backend) GetAllChannels(isPrivate *bool) (*channels.ChannelCollect
 	return backend.runMultiChannelQuery(sql, args)
 }
 
-func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (*channels.ChannelCollection, error) {
+// GetChannelsUserHasCharacterIn finds all of the Channels that the given User has at least one Character in.
+func (backend Backend) GetChannelsUserHasCharacterIn(userID int, isPrivate *bool) (channels.ChannelCollection, error) {
+	builder := PSQLBuilder().
+		Select(channelColumns...).
+		Distinct().
+		From(channelsTable).
+		Join(fmt.Sprintf("%s ON %s.%s = %s.%s", charactersTable, charactersTable, "channelid", channelsTable, "id")).
+		Where(sq.Eq{"userid": userID})
+
+	if isPrivate != nil {
+		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
+	}
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build query to find channels that the user has at least one character in.")
+		return nil, err
+	}
+
+	return backend.runMultiChannelQuery(sql, args)
+}
+
+func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (channels.ChannelCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
 		return nil, err
@@ -129,10 +128,10 @@ func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (*ch
 			return nil, err
 		}
 
-		outChannels = append(outChannels, channel)
+		outChannels = append(outChannels, &channel)
 	}
 
-	return &outChannels, nil
+	return outChannels, nil
 }
 
 // CreateChannel creates a new channel using the provided channel info
@@ -162,18 +161,6 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 
 // DeleteChannel deletes the channel that corresponds to the given ID.
 func (backend Backend) DeleteChannel(id int) error {
-	// TODO: Potentially leave this up to the caller to do beforehand
-	err := backend.RemoveAllUsersFromChannel(id)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Potentially leave this up to the caller to do beforehand
-	err = backend.DeleteMessagesFromChannel(id)
-	if err != nil {
-		return err
-	}
-
 	sql, args, err := PSQLBuilder().
 		Delete(channelsTable).
 		Where(sq.Eq{"id": id}).
