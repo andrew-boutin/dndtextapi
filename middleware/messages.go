@@ -59,23 +59,23 @@ func GetMessages(c *gin.Context) {
 	}
 
 	var onlyStoryMsgs bool
-	var messages messages.MessageCollection
+	var outMessages messages.MessageCollection
 	switch msgType {
 	case storyMsgType:
 		onlyStoryMsgs = true
-		messages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
+		outMessages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
 	case metaMsgType:
 		onlyStoryMsgs = false
-		messages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
+		outMessages, err = dbBackend.GetMessagesInChannel(channel.ID, &onlyStoryMsgs)
 	default:
-		messages, err = dbBackend.GetMessagesInChannel(channel.ID, nil)
+		outMessages, err = dbBackend.GetMessagesInChannel(channel.ID, nil)
 	}
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, messages)
+	c.JSON(http.StatusOK, outMessages)
 }
 
 // GetMessage retrieves a single Message using the Message ID
