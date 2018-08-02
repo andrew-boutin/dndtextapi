@@ -1,13 +1,13 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
 import requests
-from base import BaseTest
+from base import TestBase
 
-class MessageRoutesTest(BaseTest):
+class TestMessageRoutes(TestBase):
 
-    def setUp(self):
-        super(MessageRoutesTest, self).setUp()
+    def setup_method(self, test_method):
+        super(TestMessageRoutes, self).setup_method(test_method)
         self.url = f"{self.base}/messages"
 
-    def tearDown(self):
-        super(MessageRoutesTest, self).tearDown()
+    def teardown_method(self, test_method):
+        super(TestMessageRoutes, self).teardown_method(test_method)

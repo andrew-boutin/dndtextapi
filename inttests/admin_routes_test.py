@@ -1,13 +1,13 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
 import requests
-from base import BaseTest
+from base import TestBase
 
-class AdminRoutesTest(BaseTest):
+class TestAdminRoutes(TestBase):
 
-    def setUp(self):
-        super(AdminRoutesTest, self).setUp()
+    def setup_method(self, test_method):
+        super(TestAdminRoutes, self).setup_method(test_method)
         self.url = f"{self.base}/admin"
 
-    def tearDown(self):
-        super(AdminRoutesTest, self).tearDown()
+    def teardown_method(self, test_method):
+        super(TestAdminRoutes, self).teardown_method(test_method)

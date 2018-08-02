@@ -20,7 +20,7 @@ services:
 
   inttest:
     build: ./inttests/.
-    command: "./wait-for-it.sh mockserver:1080 -- ./wait-for-it.sh app:8080 -- python -m unittest discover -s . -p '*_test.py'"
+    command: "./wait-for-it.sh mockserver:1080 -- ./wait-for-it.sh app:8080 -- python -m pytest ."
     depends_on:
       - mockserver
   mockserver:

@@ -4,22 +4,17 @@ import unittest, requests, json, string
 from random import choice
 from mockserver import MockServerClient, request, response
 
-class BaseTest(unittest.TestCase):
+class TestBase:
 
-    def __init__(self, *args, **kwargs):
-        super(BaseTest, self).__init__(*args, **kwargs)
+    def setup_method(self, test_method):
         self.base = "http://app:8080"
-
-    def setUp(self):
-        self.maxDiff = None
-
         self.client = MockServerClient("http://mockserver:1080")
         self.client.reset()
 
         self.read_headers = {"Accept": "application/json"}
         self.read_write_headers = {"Content-Type": "application/json", **self.read_headers}
 
-    def tearDown(self):
+    def teardown_method(self, test_method):
         self.client.verify()
 
     def get_authn_cookies_user_normal(self):
@@ -41,7 +36,7 @@ class BaseTest(unittest.TestCase):
 
         url = f"{self.base}/login"
         r = requests.get(url)
-        self.assertEqual(r.status_code, 200)
+        assert r.status_code == 200
 
         # Retrieve the state that our app sent to the mock server when it redirected
         # to the google oauth2 auth endpoint.
@@ -51,9 +46,9 @@ class BaseTest(unittest.TestCase):
         # https://github.com/internap/python-mockserver-client/issues/16.
         data = json.dumps({"path": "/o/oauth2/auth", "method": "GET"})
         r = requests.put("http://mockserver:1080/retrieve?type=REQUESTS", data=data)
-        self.assertEqual(200, r.status_code)
+        assert 200 == r.status_code
         state = r.json()[-1]["queryStringParameters"]["state"][0]
-        self.assertNotEqual("", state)
+        assert "" != state
 
         # Mock out the app attempting to get an access token using the state and code from Google
         tokenJson = json.dumps({
@@ -76,6 +71,6 @@ class BaseTest(unittest.TestCase):
         # Perform the callback from Google to finish the authentication with the app, return the cookie
         code = "supersecretcode"
         r = requests.get(f"{self.base}/callback?state={state}&code={code}")
-        self.assertEqual(204, r.status_code)
+        assert 204 == r.status_code
         cookie = r.cookies['dndtextapisession']
         return dict(dndtextapisession=cookie)

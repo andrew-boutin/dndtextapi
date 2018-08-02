@@ -5,3 +5,4 @@ mockserver-client==0.0.5
 requests==2.19.1
 urllib3==1.23
 python-dateutil===2.7.3
+pytest==3.7.0

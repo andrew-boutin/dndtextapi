@@ -20,7 +20,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- Switch to single Character per Channel for now
 - Delete Channel has dependencies on Messages and Characters
 - Delete User has dependencies on Messages and Characters
 - Switch content-type and accept to validate if present.
@@ -39,7 +38,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Improve error handling (500s probably should only log the error and not expose the underlying problem.)
 - Improve packages docs - only list ones that have info that should be shared
 - Hide User.IsAdmin from non /admin routes
-- Beef up design doc (especially authentication)
 - `wait-for-it.sh` in single place.
 - db column names use `_` between words
 - Separate file for sample data

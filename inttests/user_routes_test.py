@@ -1,13 +1,13 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
 import requests
-from base import BaseTest
+from base import TestBase
 
-class UserRoutesTest(BaseTest):
+class TestUserRoutes(TestBase):
 
-    def setUp(self):
-        super(UserRoutesTest, self).setUp()
+    def setup_method(self, test_method):
+        super(TestUserRoutes, self).setup_method(test_method)
         self.url = f"{self.base}/users"
 
-    def tearDown(self):
-        super(UserRoutesTest, self).tearDown()
+    def teardown_method(self, test_method):
+        super(TestUserRoutes, self).teardown_method(test_method)

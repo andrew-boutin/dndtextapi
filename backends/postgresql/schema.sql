@@ -32,7 +32,8 @@ CREATE TABLE characters (
     description text NOT NULL default '',
     createdon timestamp default current_timestamp,
     lastupdated timestamp default current_timestamp,
-    UNIQUE (name, channelid)
+    UNIQUE (name, channelid),
+    UNIQUE (userid, channelid)
 );
 
 CREATE TABLE messages (
