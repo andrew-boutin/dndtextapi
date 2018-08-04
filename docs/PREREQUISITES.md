@@ -4,7 +4,7 @@
 
 Install [`docker`](https://www.docker.com/) and [`docker-compose`](https://docs.docker.com/compose/).
 
-Set environment variable `DNDTEXTAPI_ENV` to either `int` or `prod`.
+Set environment variable `DNDTEXTAPI_ENV` to either `int` or `prod`. Default is `int`.
 
 `int` will use the config file `config-int.yml` which is already set up. This uses authentication against a mock server int the  compose network which allows the integration tests to authenticate with the server.
 

@@ -21,8 +21,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 ## Fix Ups
 
 - Delete Channel has dependencies on Messages and Characters
-- Delete User has dependencies on Messages and Characters
-- Default to int for config file (no env var set)
+- Delete User has dependencies on Messages and Characters`
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md

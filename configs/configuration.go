@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const defaultEnv = "int"
+
 // Configuration is the top level configuration data from
 // the config file.
 type Configuration struct {
@@ -26,6 +28,11 @@ func LoadConfig() (configuration Configuration) {
 	viper.SetEnvPrefix("DNDTEXTAPI")
 	viper.BindEnv("ENV")
 	env := viper.Get("ENV")
+
+	// Default to the integration environment config since that works out of the box
+	if env == nil {
+		env = defaultEnv
+	}
 
 	// Load the config file and use it to populate the config structs
 	viper.SetConfigName(fmt.Sprintf("config-%s", env))
