@@ -32,7 +32,7 @@ func GetUser(c *gin.Context) {
 	// Users are only allowed to retrieve themselves
 	if userIDFromPath != user.ID {
 		log.Error("User attempted to get a User other than themselves.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -53,7 +53,7 @@ func UpdateUser(c *gin.Context) {
 
 	// Users are only allowed to update themselves
 	if userIDFromPath != user.ID {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -87,7 +87,7 @@ func DeleteUser(c *gin.Context) {
 
 	// Users are only allowed to delete themselves
 	if userIDFromPath != user.ID {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 

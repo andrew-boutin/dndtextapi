@@ -42,7 +42,7 @@ class TestPublicRoutes(TestBase):
         # Make sure we can't get a private channel
         url = f"{url}2"
         r = requests.get(url, headers=self.read_headers)
-        assert r.status_code == 401
+        assert r.status_code == 403
 
     def test_get_messages_from_public_channel(self):
         """Test the public get messages route for getting messages from a channel."""
@@ -51,7 +51,7 @@ class TestPublicRoutes(TestBase):
         # Use a private channel id verify denied
         url = messages_url % 2
         r = requests.get(url, headers=self.read_headers)
-        assert r.status_code == 401
+        assert r.status_code == 403
 
         # Make up a channel id verify not found
         url = messages_url % 999

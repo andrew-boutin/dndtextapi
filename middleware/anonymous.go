@@ -56,7 +56,7 @@ func GetPublicChannel(c *gin.Context) {
 
 	if channel.IsPrivate {
 		log.WithError(err).Error("Anonymous user attempting to look up private channel denying access.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -72,7 +72,7 @@ func GetStoryMessagesInChannel(c *gin.Context) {
 
 	if channel.IsPrivate {
 		log.Error("Anonymous User attempting to look up messages from private channel denying access.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 

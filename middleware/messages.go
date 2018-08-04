@@ -53,7 +53,7 @@ func GetMessages(c *gin.Context) {
 
 		// User is not a member of the Channel so deny access
 		if !isMember {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 	}
@@ -113,7 +113,7 @@ func GetMessage(c *gin.Context) {
 
 		// User is not a member of the Channel so deny access
 		if !isMember {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 	}
@@ -210,7 +210,7 @@ func DeleteMessage(c *gin.Context) {
 	if char.UserID != user.ID {
 		// User didn't create the Message and isn't the Channel owner so deny access
 		if channel.OwnerID != user.ID {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 	}
@@ -261,7 +261,7 @@ func UpdateMessage(c *gin.Context) {
 
 	// The User must have created the Message in order to update it
 	if char.UserID != user.ID { // TODO: Check if User owns the Character tied to the Message *****
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 

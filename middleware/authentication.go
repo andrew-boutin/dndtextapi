@@ -169,7 +169,7 @@ func CallbackHandler(c *gin.Context) {
 	// Deny access if the User has been banned.
 	if user.IsBanned {
 		log.Error("Banned user attempted to access route.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -245,7 +245,7 @@ func AuthenticationMiddleware(c *gin.Context) {
 	// while they have an active session
 	if user.IsBanned {
 		log.Error("Banned user attempted to access route.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 

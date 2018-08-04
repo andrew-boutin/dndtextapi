@@ -90,7 +90,7 @@ func GetChannel(c *gin.Context) {
 
 		// User not a member of the Channel so deny access
 		if !userInChannel {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 	}
@@ -147,7 +147,7 @@ func DeleteChannel(c *gin.Context) {
 
 	// User must be the owner of the Channel in order to delete
 	if existingChannel.OwnerID != user.ID {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.AbortWithError(http.StatusForbidden, err)
 		return
 	}
 
@@ -192,7 +192,7 @@ func UpdateChannel(c *gin.Context) {
 
 	// User must be the owner of the Channel in order to update
 	if existingChannel.OwnerID != user.ID {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.AbortWithError(http.StatusForbidden, err)
 		return
 	}
 

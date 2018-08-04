@@ -26,7 +26,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md
 - Get around having to rebuild docker images (map volume on startup or something etc.)
-- 403 instead of 401 in many places
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
 - Add a lot more logging (especially in all middleware right before aborting request w/ only status)

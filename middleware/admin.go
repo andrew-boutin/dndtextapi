@@ -45,7 +45,7 @@ func RequireAdminHandler(c *gin.Context) {
 	user := GetAuthenticatedUser(c)
 	if !user.IsAdmin {
 		log.Error("Non admin user attempted to access route that requires admin.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 	}
 }
 
@@ -303,7 +303,7 @@ func AdminUpdateUser(c *gin.Context) {
 	// Prevent updates to other admins
 	if existingUser.IsAdmin {
 		log.WithError(err).Error("Admin attempted to update another admin user.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -341,7 +341,7 @@ func AdminDeleteUser(c *gin.Context) {
 	// Prevent deletion of another admin
 	if existingUser.IsAdmin {
 		log.WithError(err).Error("Admin attempted to delete another admin.")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
