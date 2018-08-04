@@ -44,6 +44,7 @@ func (backend Backend) GetAllUsers() (users.UserCollection, error) {
 		From(usersTable).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to create get all users sql.")
 		return nil, err
 	}
 
@@ -55,6 +56,7 @@ func (backend Backend) GetAllUsers() (users.UserCollection, error) {
 func (backend Backend) runMultiUsersQuery(sql string, args []interface{}) (users.UserCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Failed to execute multi user query.")
 		return nil, err
 	}
 
@@ -63,6 +65,7 @@ func (backend Backend) runMultiUsersQuery(sql string, args []interface{}) (users
 		var user users.User
 		err = rows.StructScan(&user)
 		if err != nil {
+			log.WithError(err).Error("Failed to load user result from multi user query.")
 			return nil, err
 		}
 
@@ -85,12 +88,14 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		Suffix(usersReturning).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build sql for update user.")
 		return nil, err
 	}
 
 	updatedUser := &users.User{}
 	err = backend.db.QueryRowx(sql, args...).StructScan(updatedUser)
 	if err != nil {
+		log.WithError(err).Error("Failed to execute update user query.")
 		return nil, err
 	}
 
@@ -104,16 +109,34 @@ func (backend Backend) DeleteUser(userID int) error {
 		Where(sq.Eq{"id": userID}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build query for delete user.")
 		return err
 	}
 
 	// TODO: Check value
 	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete user query.")
+	}
 	return err
 }
 
+// GetUserByID retrieves a User by using the given id.
+func (backend Backend) GetUserByID(id int) (*users.User, error) {
+	user := &users.User{}
+	err := backend.getSingle(id, usersTable, userColumns, user)
+	if err != nil {
+		if err == sqlP.ErrNoRows {
+			return nil, users.ErrUserNotFound
+		}
+		log.WithError(err).Error("Query issue for get user.")
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // GetUserByEmail retrieves a User by using the given email address.
-// TODO: Combine with GetUserByID and take in query params of some sort
 func (backend Backend) GetUserByEmail(email string) (*users.User, error) {
 	sql, args, err := PSQLBuilder().
 		Select(userColumns...).
@@ -121,35 +144,17 @@ func (backend Backend) GetUserByEmail(email string) (*users.User, error) {
 		Where(sq.Eq{"email": email}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build get user by email query.")
 		return nil, err
 	}
 
-	return backend.runSingleUserQuery(sql, args)
-}
-
-// GetUserByID retrieves a User by using the given id.
-func (backend Backend) GetUserByID(id int) (*users.User, error) {
-	sql, args, err := PSQLBuilder().
-		Select(userColumns...).
-		From(usersTable).
-		Where(sq.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-
-	return backend.runSingleUserQuery(sql, args)
-}
-
-// runSingleUserQuery executes the given query with the given arguments to
-// retrieve a single User.
-func (backend Backend) runSingleUserQuery(sql string, args []interface{}) (*users.User, error) {
 	user := &users.User{}
-	err := backend.db.Get(user, sql, args...)
+	err = backend.db.Get(user, sql, args...)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, users.ErrUserNotFound
 		}
+		log.WithError(err).Error("Issue executing get user by email query.")
 		return nil, err
 	}
 
@@ -191,12 +196,14 @@ func (backend Backend) UpdateUserLastLogin(u *users.User) (*users.User, error) {
 		Suffix(usersReturning).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build update user last login query.")
 		return nil, err
 	}
 
 	updatedUser := &users.User{}
 	err = backend.db.QueryRowx(sql, args...).StructScan(updatedUser)
 	if err != nil {
+		log.WithError(err).Error("Failed to execute update user last login query.")
 		return nil, err
 	}
 

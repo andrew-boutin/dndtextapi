@@ -37,26 +37,17 @@ func init() {
 
 // GetChannel retrieves the channel corresponding to the given id.
 func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
-	sql, args, err := PSQLBuilder().
-		Select(channelColumns...).
-		From(channelsTable).
-		Where(sq.Eq{"id": id}).
-		Limit(1).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-
 	channel := &channels.Channel{}
-	err = backend.db.Get(channel, sql, args...)
+	err := backend.getSingle(id, channelsTable, channelColumns, channel)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, channels.ErrChannelNotFound
 		}
+		log.WithError(err).Error("Query issue for get channel.")
 		return nil, err
 	}
 
-	return channel, err
+	return channel, nil
 }
 
 // GetChannelsOwnedByUser retrieves all of the Channels where the provided User ID
@@ -68,6 +59,7 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (channels.ChannelColle
 		Where(sq.Eq{"owner_id": userID}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build query for get channels owned by user.")
 		return nil, err
 	}
 
@@ -87,6 +79,7 @@ func (backend Backend) GetAllChannels(isPrivate *bool) (channels.ChannelCollecti
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to be build query for get all channels.")
 		return nil, err
 	}
 
@@ -118,6 +111,7 @@ func (backend Backend) GetChannelsUserHasCharacterIn(userID int, isPrivate *bool
 func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (channels.ChannelCollection, error) {
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Issue executing query for multiple channels.")
 		return nil, err
 	}
 
@@ -126,6 +120,7 @@ func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (cha
 		var channel channels.Channel
 		err = rows.StructScan(&channel)
 		if err != nil {
+			log.WithError(err).Error("Issue loading channel during multiple channel query.")
 			return nil, err
 		}
 
@@ -167,16 +162,19 @@ func (backend Backend) DeleteChannel(id int) error {
 		Where(sq.Eq{"id": id}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to be build query for delete channel.")
 		return err
 	}
 
 	result, err := backend.db.Exec(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Issue executing query for delete channel.")
 		return err
 	}
 
 	numRowsAffected, err := result.RowsAffected()
 	if err != nil {
+		log.WithError(err).Error("Failed to determine how many channels were affected by delete query.")
 		return err
 	}
 
@@ -205,6 +203,7 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		Suffix(channelsReturning).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build query for update channel.")
 		return nil, err
 	}
 
@@ -214,6 +213,7 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		if err == sqlP.ErrNoRows {
 			return nil, channels.ErrChannelNotFound
 		}
+		log.WithError(err).Error("Issue executing query for update channel.")
 		return nil, err
 	}
 

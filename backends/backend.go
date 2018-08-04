@@ -3,6 +3,8 @@
 package backends
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/andrew-boutin/dndtextapi/characters"
@@ -54,14 +56,16 @@ type Backend interface {
 
 // InitBackend initializes whatever backend matches the provided
 // configuration and returns it.
-func InitBackend(backendConfig configs.BackendConfiguration) (backendDB Backend) {
-	log.Printf("backend config type is %s", backendConfig.Type)
-
+func InitBackend(backendConfig configs.BackendConfiguration) (backendDB Backend, err error) {
 	switch backendConfig.Type {
 	case "postgres":
-		backendDB = postgresql.MakePostgresqlBackend(backendConfig.User, backendConfig.PW, backendConfig.DBName)
+		backendDB, err = postgresql.MakePostgresqlBackend(backendConfig.User, backendConfig.PW, backendConfig.DBName)
+		if err != nil {
+			log.WithError(err).Error("Failed to initialize postgresql backend.")
+		}
 	default:
-		log.Fatalf("Unexpected backend config type %s", backendConfig.Type)
+		err = fmt.Errorf("Unexpected backend config type %s", backendConfig.Type)
+		log.WithError(err).Error("Failed to initialize a backend.")
 	}
 	return
 }

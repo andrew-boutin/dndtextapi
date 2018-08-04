@@ -28,7 +28,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Get around having to rebuild docker images (map volume on startup or something etc.)
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
-- Add a lot more logging (especially in all middleware right before aborting request w/ only status)
+- Add more middleware loggin
 - 404 consistent handling. Remove duplicate checks. Make sure everywhere supports it.
 - Notes about connecting and inspecting the database.
 - Restrict permissions for db api user.

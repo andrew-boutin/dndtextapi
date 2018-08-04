@@ -49,11 +49,13 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed tobuild get messages in channel query.")
 		return nil, err
 	}
 
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Failed to execute get messages in channel query.")
 		return nil, err
 	}
 
@@ -62,6 +64,7 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 		var message messages.Message
 		err = rows.StructScan(&message)
 		if err != nil {
+			log.WithError(err).Error("Failed to load message from get messages in channel query.")
 			return nil, err
 		}
 
@@ -97,21 +100,13 @@ func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, er
 // GetMessage retrieves the Message from the database that matches the
 // given ID.
 func (backend Backend) GetMessage(id int) (*messages.Message, error) {
-	sql, args, err := PSQLBuilder().
-		Select(messageColumns...).
-		From(messagesTable).
-		Where(sq.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		return nil, err
-	}
-
 	message := &messages.Message{}
-	err = backend.db.Get(message, sql, args...)
+	err := backend.getSingle(id, messagesTable, messageColumns, message)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, messages.ErrMessageNotFound
 		}
+		log.WithError(err).Error("Query issue for get message.")
 		return nil, err
 	}
 
@@ -126,10 +121,14 @@ func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
 		Where(sq.Eq{"channel_id": channelID}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build delete messages from channel query.")
 		return err
 	}
 
 	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delet messages from channel query.")
+	}
 	return err
 }
 
@@ -141,16 +140,19 @@ func (backend Backend) DeleteMessage(id int) error {
 		Where(sq.Eq{"id": id}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build delete message query.")
 		return err
 	}
 
 	result, err := backend.db.Exec(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Failed to execute delete message query.")
 		return err
 	}
 
 	numRowsAffected, err := result.RowsAffected()
 	if err != nil {
+		log.WithError(err).Error("Failed to determine how many messages were affected by delete message.")
 		return err
 	}
 
@@ -174,6 +176,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		Suffix(messagesReturning).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build update message query.")
 		return nil, err
 	}
 
@@ -183,6 +186,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		if err == sqlP.ErrNoRows {
 			return nil, messages.ErrMessageNotFound
 		}
+		log.WithError(err).Error("Issue running update message query.")
 		return nil, err
 	}
 

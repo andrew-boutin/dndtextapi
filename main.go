@@ -14,7 +14,10 @@ func main() {
 	configuration := configs.LoadConfig()
 
 	// Initialize backend
-	backend := backends.InitBackend(configuration.Backend)
+	backend, err := backends.InitBackend(configuration.Backend)
+	if err != nil {
+		panic(err)
+	}
 
 	// Initalize authentication data
 	middleware.InitAuthentication(configuration.Authentication)

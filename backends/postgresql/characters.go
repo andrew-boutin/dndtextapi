@@ -46,6 +46,7 @@ func (backend Backend) DoesUserHaveCharacterInChannel(userID, channelID int) (bo
 		Where(sq.Eq{"user_id": userID}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build query for does user have character in channel.")
 		return false, err
 	}
 
@@ -56,6 +57,7 @@ func (backend Backend) DoesUserHaveCharacterInChannel(userID, channelID int) (bo
 	var exists bool
 	err = backend.db.QueryRow(sql, args...).Scan(&exists)
 	if err != nil && err != sqlP.ErrNoRows {
+		log.WithError(err).Error("Issue executing query for does user have character in channel.")
 		return false, err
 	}
 
@@ -69,11 +71,13 @@ func (backend Backend) GetCharactersInChannel(channelID int) (characters.Charact
 		From(charactersTable).
 		Where(sq.Eq{"channel_id": channelID}).ToSql()
 	if err != nil {
+		log.WithError(err).Error("Failed to build query for get characters in channel.")
 		return nil, err
 	}
 
 	rows, err := backend.db.Queryx(sql, args...)
 	if err != nil {
+		log.WithError(err).Error("Issue executing query for get characters in channel.")
 		return nil, err
 	}
 
@@ -82,6 +86,7 @@ func (backend Backend) GetCharactersInChannel(channelID int) (characters.Charact
 		var char characters.Character
 		err = rows.StructScan(&char)
 		if err != nil {
+			log.WithError(err).Error("Issue loading character for get characters in channel.")
 			return nil, err
 		}
 
@@ -128,6 +133,7 @@ func (backend Backend) UpdateCharacter(id int, c *characters.Character) (*charac
 		Suffix(charactersReturning).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Issue building query for update character.")
 		return nil, err
 	}
 
@@ -137,6 +143,7 @@ func (backend Backend) UpdateCharacter(id int, c *characters.Character) (*charac
 		if err == sqlP.ErrNoRows {
 			return nil, characters.ErrCharacterNotFound
 		}
+		log.WithError(err).Error("Issue executing query for update character.")
 		return nil, err
 	}
 
@@ -150,11 +157,15 @@ func (backend Backend) DeleteCharacter(characterID int) error {
 		Where(sq.Eq{"id": characterID}).
 		ToSql()
 	if err != nil {
+		log.WithError(err).Error("Issue building query for delete character.")
 		return err
 	}
 
 	// TODO: Check value
 	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Issue executing query for delete character.")
+	}
 	return err
 }
 
@@ -166,27 +177,9 @@ func (backend Backend) GetCharacter(id int) (*characters.Character, error) {
 		if err == sqlP.ErrNoRows {
 			return nil, characters.ErrCharacterNotFound
 		}
+		log.WithError(err).Error("Query issue for get character.")
 		return nil, err
 	}
 
 	return char, nil
-}
-
-// TODO: Use this in other places
-func (backend Backend) getSingle(id int, tableName string, cols []string, s interface{}) (err error) {
-	sql, args, err := PSQLBuilder().
-		Select(cols...).
-		From(tableName).
-		Where(sq.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		return err
-	}
-
-	err = backend.db.Get(s, sql, args...)
-	if err != nil {
-		return err
-	}
-
-	return
 }
