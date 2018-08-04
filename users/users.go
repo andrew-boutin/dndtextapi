@@ -12,15 +12,15 @@ var ErrUserNotFound = fmt.Errorf("user not found")
 
 // User holds User info
 type User struct {
-	Username    string
-	Email       string
-	Bio         string
-	ID          int
-	IsAdmin     bool
-	IsBanned    bool
-	LastLogin   time.Time
-	CreatedOn   time.Time
-	LastUpdated time.Time
+	ID          int       `db:"id"`
+	Username    string    `db:"username"`
+	Email       string    `db:"email"`
+	Bio         string    `db:"bio"`
+	IsAdmin     bool      `db:"is_admin"`
+	IsBanned    bool      `db:"is_banned"`
+	LastLogin   time.Time `db:"last_login"`
+	CreatedOn   time.Time `db:"created_on"`
+	LastUpdated time.Time `db:"last_updated"`
 }
 
 // UserCollection is a slice of Users.

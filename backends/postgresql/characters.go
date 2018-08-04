@@ -15,19 +15,18 @@ import (
 const (
 	charactersTable = "characters"
 
-	// TODO: Use this temp workaround in other places for now too
 	// TODO: Figure out how to use characterColumns... instead - maybe init func w/ string join
-	charactersReturning = "RETURNING id, userid, channelid, name, description, createdon, lastupdated"
+	charactersReturning = "RETURNING id, user_id, channel_id, name, description, created_on, last_updated"
 )
 
 var characterColumns = []string{
 	"id",
-	"userid",
-	"channelid",
+	"user_id",
+	"channel_id",
 	"name",
 	"description",
-	"createdon",
-	"lastupdated",
+	"created_on",
+	"last_updated",
 }
 
 func init() {
@@ -43,8 +42,8 @@ func (backend Backend) DoesUserHaveCharacterInChannel(userID, channelID int) (bo
 	sql, args, err := PSQLBuilder().
 		Select("1").
 		From(charactersTable).
-		Where(sq.Eq{"channelid": channelID}).
-		Where(sq.Eq{"userid": userID}).
+		Where(sq.Eq{"channel_id": channelID}).
+		Where(sq.Eq{"user_id": userID}).
 		ToSql()
 	if err != nil {
 		return false, err
@@ -68,7 +67,7 @@ func (backend Backend) GetCharactersInChannel(channelID int) (characters.Charact
 	sql, args, err := PSQLBuilder().
 		Select(characterColumns...).
 		From(charactersTable).
-		Where(sq.Eq{"channelid": channelID}).ToSql()
+		Where(sq.Eq{"channel_id": channelID}).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func (backend Backend) GetCharactersInChannel(channelID int) (characters.Charact
 func (backend Backend) CreateCharacter(c *characters.Character) (*characters.Character, error) {
 	sql, args, err := PSQLBuilder().
 		Insert(charactersTable).
-		Columns("userid", "channelid").
+		Columns("user_id", "channel_id").
 		Values(c.UserID, c.ChannelID).
 		Suffix(charactersReturning).
 		ToSql()

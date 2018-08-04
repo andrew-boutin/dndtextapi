@@ -11,16 +11,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const messagesTable = "messages"
+const (
+	messagesTable     = "messages"
+	messagesReturning = "RETURNING id, character_id, channel_id, content, is_story, created_on, last_updated"
+)
 
 var messageColumns = []string{
 	"id",
-	"characterid",
-	"channelid",
+	"character_id",
+	"channel_id",
 	"content",
-	"isstory",
-	"createdon",
-	"lastupdated",
+	"is_story",
+	"created_on",
+	"last_updated",
 }
 
 func init() {
@@ -38,10 +41,10 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 	builder := PSQLBuilder().
 		Select(messageColumns...).
 		From(messagesTable).
-		Where(sq.Eq{"channelid": channelID})
+		Where(sq.Eq{"channel_id": channelID})
 
 	if onlyStory != nil {
-		builder = builder.Where(sq.Eq{"isstory": *onlyStory})
+		builder = builder.Where(sq.Eq{"is_story": *onlyStory})
 	}
 
 	sql, args, err := builder.ToSql()
@@ -72,9 +75,9 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, error) {
 	sql, args, err := PSQLBuilder().
 		Insert(messagesTable).
-		Columns("characterid", "channelid", "content").
+		Columns("character_id", "channel_id", "content").
 		Values(m.CharacterID, m.ChannelID, m.Content).
-		Suffix("RETURNING id, characterid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix(messagesReturning).
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create message sql.")
@@ -120,7 +123,7 @@ func (backend Backend) GetMessage(id int) (*messages.Message, error) {
 func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
 	sql, args, err := PSQLBuilder().
 		Delete(messagesTable).
-		Where(sq.Eq{"channelid": channelID}).
+		Where(sq.Eq{"channel_id": channelID}).
 		ToSql()
 	if err != nil {
 		return err
@@ -168,7 +171,7 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 		Update(messagesTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, characterid, channelid, content, isstory, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix(messagesReturning).
 		ToSql()
 	if err != nil {
 		return nil, err

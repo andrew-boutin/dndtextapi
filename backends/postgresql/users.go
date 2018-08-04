@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	usersTable = "users"
+	usersTable     = "users"
+	usersReturning = "RETURNING id, username, email, bio, is_admin, is_banned, last_login, created_on, last_updated"
 )
 
 var userColumns = []string{
@@ -22,11 +23,11 @@ var userColumns = []string{
 	"username",
 	"email",
 	"bio",
-	"isadmin",
-	"isbanned",
-	"lastlogin",
-	"createdon",
-	"lastupdated",
+	"is_admin",
+	"is_banned",
+	"last_login",
+	"created_on",
+	"last_updated",
 }
 
 func init() {
@@ -81,7 +82,7 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		Update(usersTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix(usersReturning).
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -161,7 +162,7 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 		Insert(usersTable).
 		Columns("username", "email").
 		Values(gu.Email, gu.Email).
-		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use userColumns...
+		Suffix(usersReturning).
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create user sql.")
@@ -181,13 +182,13 @@ func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
 // UpdateUserLastLogin sets the passed in User's last login time to now.
 func (backend Backend) UpdateUserLastLogin(u *users.User) (*users.User, error) {
 	setMap := map[string]interface{}{
-		"lastlogin": time.Now(),
+		"last_login": time.Now(),
 	}
 	sql, args, err := PSQLBuilder().
 		Update(usersTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": u.ID}).
-		Suffix("RETURNING id, username, email, bio, isadmin, isbanned, lastlogin, createdon, lastupdated"). // TODO: Use messageColumns...
+		Suffix(usersReturning).
 		ToSql()
 	if err != nil {
 		return nil, err

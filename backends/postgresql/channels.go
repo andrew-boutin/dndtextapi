@@ -12,19 +12,20 @@ import (
 )
 
 const (
-	channelsTable = "channels"
+	channelsTable     = "channels"
+	channelsReturning = "RETURNING id, name, description, topic, owner_id, is_private, dm_id, created_on, last_updated"
 )
 
 var channelColumns = []string{
+	"id",
 	"name",
 	"description",
 	"topic",
-	"id",
-	"ownerid",
-	"createdon",
-	"lastupdated",
-	"isprivate",
-	"dmid",
+	"owner_id",
+	"is_private",
+	"dm_id",
+	"created_on",
+	"last_updated",
 }
 
 func init() {
@@ -64,7 +65,7 @@ func (backend Backend) GetChannelsOwnedByUser(userID int) (channels.ChannelColle
 	sql, args, err := PSQLBuilder().
 		Select(channelColumns...).
 		From(channelsTable).
-		Where(sq.Eq{"ownerid": userID}).
+		Where(sq.Eq{"owner_id": userID}).
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func (backend Backend) GetAllChannels(isPrivate *bool) (channels.ChannelCollecti
 		From(channelsTable)
 
 	if isPrivate != nil {
-		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
+		builder = builder.Where(sq.Eq{"is_private": *isPrivate})
 	}
 
 	sql, args, err := builder.ToSql()
@@ -98,11 +99,11 @@ func (backend Backend) GetChannelsUserHasCharacterIn(userID int, isPrivate *bool
 		Select(channelColumns...).
 		Distinct().
 		From(channelsTable).
-		Join(fmt.Sprintf("%s ON %s.%s = %s.%s", charactersTable, charactersTable, "channelid", channelsTable, "id")).
-		Where(sq.Eq{"userid": userID})
+		Join(fmt.Sprintf("%s ON %s.%s = %s.%s", charactersTable, charactersTable, "channel_id", channelsTable, "id")).
+		Where(sq.Eq{"user_id": userID})
 
 	if isPrivate != nil {
-		builder = builder.Where(sq.Eq{"isprivate": *isPrivate})
+		builder = builder.Where(sq.Eq{"is_private": *isPrivate})
 	}
 
 	sql, args, err := builder.ToSql()
@@ -140,9 +141,9 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 	// TODO: Don't require description, default isprivate to false
 	sql, args, err := PSQLBuilder().
 		Insert(channelsTable).
-		Columns("name", "description", "topic", "ownerid", "isprivate", "dmid").
+		Columns("name", "description", "topic", "owner_id", "is_private", "dm_id").
 		Values(c.Name, c.Description, c.OwnerID, c.IsPrivate, c.DMID).
-		Suffix("RETURNING id, name, description, topic, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
+		Suffix(channelsReturning).
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building create channel sql.")
@@ -193,15 +194,15 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		"name":        c.Name,
 		"description": c.Description,
 		"topic":       c.Topic,
-		"ownerid":     c.OwnerID,
-		"isprivate":   c.IsPrivate,
-		"dmid":        c.DMID,
+		"owner_id":    c.OwnerID,
+		"is_private":  c.IsPrivate,
+		"dm_id":       c.DMID,
 	}
 	sql, args, err := PSQLBuilder().
 		Update(channelsTable).
 		SetMap(setMap).
 		Where(sq.Eq{"id": id}).
-		Suffix("RETURNING id, name, description, topic, ownerid, isprivate, dmid, createdon, lastupdated"). // TODO: Use channelColumns...
+		Suffix(channelsReturning).
 		ToSql()
 	if err != nil {
 		return nil, err

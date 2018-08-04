@@ -12,15 +12,15 @@ var ErrChannelNotFound = fmt.Errorf("channel not found")
 
 // Channel contains all of the data for a channel
 type Channel struct {
-	Name        string
-	Description string
-	Topic       string
-	ID          int
-	OwnerID     int
-	IsPrivate   bool
-	CreatedOn   time.Time
-	LastUpdated time.Time
-	DMID        int
+	Name        string    `db:"name"`
+	Description string    `db:"description"`
+	Topic       string    `db:"topic"`
+	ID          int       `db:"id"`
+	OwnerID     int       `db:"owner_id"`
+	IsPrivate   bool      `db:"is_private"`
+	CreatedOn   time.Time `db:"created_on"`
+	LastUpdated time.Time `db:"last_updated"`
+	DMID        int       `db:"dm_id"`
 }
 
 // ChannelCollection is a collection of channels

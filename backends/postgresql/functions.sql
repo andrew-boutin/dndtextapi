@@ -10,7 +10,7 @@ $BODY$
 DECLARE
     depatureDate DATE;
 BEGIN
-    NEW.lastupdated = now();
+    NEW.last_updated = now();
     RETURN NEW;
 END;
 $BODY$

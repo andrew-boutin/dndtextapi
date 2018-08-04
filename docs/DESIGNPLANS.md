@@ -37,7 +37,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Improve packages docs - only list ones that have info that should be shared
 - Hide User.IsAdmin from non /admin routes
 - `wait-for-it.sh` in single place.
-- db column names use `_` between words
 - Separate file for sample data
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
 - Update docs that say the headers are required
