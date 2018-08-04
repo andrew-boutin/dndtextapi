@@ -126,45 +126,27 @@ func (backend Backend) UpdateCharacter(id int, c *characters.Character) (*charac
 		"name":        c.Name,
 		"description": c.Description,
 	}
-	sql, args, err := PSQLBuilder().
-		Update(charactersTable).
-		SetMap(setMap).
-		Where(sq.Eq{"id": id}).
-		Suffix(charactersReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Issue building query for update character.")
-		return nil, err
-	}
 
-	updatedChar := &characters.Character{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(updatedChar)
+	updatedCharacter := &characters.Character{}
+	err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedCharacter)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, characters.ErrCharacterNotFound
 		}
-		log.WithError(err).Error("Issue executing query for update character.")
+		log.WithError(err).Error("Issue with query for update character.")
 		return nil, err
 	}
 
-	return updatedChar, nil
+	return updatedCharacter, nil
 }
 
 // DeleteCharacter deletes the Character matching the input ID.
 func (backend Backend) DeleteCharacter(characterID int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(charactersTable).
-		Where(sq.Eq{"id": characterID}).
-		ToSql()
+	wasDeleted, err := backend.deleteSingle(characterID, charactersTable)
 	if err != nil {
-		log.WithError(err).Error("Issue building query for delete character.")
-		return err
-	}
-
-	// TODO: Check value
-	_, err = backend.db.Exec(sql, args...)
-	if err != nil {
-		log.WithError(err).Error("Issue executing query for delete character.")
+		log.WithError(err).Error("Failed to execute delete user query.")
+	} else if !wasDeleted {
+		return characters.ErrCharacterNotFound
 	}
 	return err
 }

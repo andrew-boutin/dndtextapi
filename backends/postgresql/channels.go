@@ -157,31 +157,12 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 
 // DeleteChannel deletes the channel that corresponds to the given ID.
 func (backend Backend) DeleteChannel(id int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(channelsTable).
-		Where(sq.Eq{"id": id}).
-		ToSql()
+	wasDeleted, err := backend.deleteSingle(id, channelsTable)
 	if err != nil {
-		log.WithError(err).Error("Failed to be build query for delete channel.")
-		return err
-	}
-
-	result, err := backend.db.Exec(sql, args...)
-	if err != nil {
-		log.WithError(err).Error("Issue executing query for delete channel.")
-		return err
-	}
-
-	numRowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.WithError(err).Error("Failed to determine how many channels were affected by delete query.")
-		return err
-	}
-
-	if numRowsAffected <= 0 {
+		log.WithError(err).Error("Failed to execute delete channel query.")
+	} else if !wasDeleted {
 		return channels.ErrChannelNotFound
 	}
-
 	return err
 }
 
@@ -196,24 +177,14 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 		"is_private":  c.IsPrivate,
 		"dm_id":       c.DMID,
 	}
-	sql, args, err := PSQLBuilder().
-		Update(channelsTable).
-		SetMap(setMap).
-		Where(sq.Eq{"id": id}).
-		Suffix(channelsReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build query for update channel.")
-		return nil, err
-	}
 
 	updatedChannel := &channels.Channel{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(updatedChannel)
+	err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedChannel)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, channels.ErrChannelNotFound
 		}
-		log.WithError(err).Error("Issue executing query for update channel.")
+		log.WithError(err).Error("Issue with query for update channel.")
 		return nil, err
 	}
 

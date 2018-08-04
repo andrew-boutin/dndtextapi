@@ -81,21 +81,14 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 		"username": u.Username,
 		"bio":      u.Bio,
 	}
-	sql, args, err := PSQLBuilder().
-		Update(usersTable).
-		SetMap(setMap).
-		Where(sq.Eq{"id": id}).
-		Suffix(usersReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build sql for update user.")
-		return nil, err
-	}
 
 	updatedUser := &users.User{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(updatedUser)
+	err := backend.updateSingle(id, usersTable, usersReturning, setMap, updatedUser)
 	if err != nil {
-		log.WithError(err).Error("Failed to execute update user query.")
+		if err == sqlP.ErrNoRows {
+			return nil, users.ErrUserNotFound
+		}
+		log.WithError(err).Error("Issue with query for update user.")
 		return nil, err
 	}
 
@@ -104,19 +97,11 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 
 // DeleteUser removes a User from the Users table.
 func (backend Backend) DeleteUser(userID int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(usersTable).
-		Where(sq.Eq{"id": userID}).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build query for delete user.")
-		return err
-	}
-
-	// TODO: Check value
-	_, err = backend.db.Exec(sql, args...)
+	wasDeleted, err := backend.deleteSingle(userID, usersTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete user query.")
+	} else if !wasDeleted {
+		return users.ErrUserNotFound
 	}
 	return err
 }

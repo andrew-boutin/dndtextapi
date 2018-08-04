@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/andrew-boutin/dndtextapi/channels"
 	log "github.com/sirupsen/logrus"
 
 	sq "github.com/Masterminds/squirrel"
@@ -109,8 +110,7 @@ func initSchema(db *sqlx.DB) error {
 	return nil
 }
 
-// TODO: Can the same be done for delete, update, and create?
-func (backend Backend) getSingle(id int, tableName string, cols []string, s interface{}) (err error) {
+func (backend Backend) getSingle(id int, tableName string, cols []string, obj interface{}) (err error) {
 	sql, args, err := PSQLBuilder().
 		Select(cols...).
 		From(tableName).
@@ -122,6 +122,51 @@ func (backend Backend) getSingle(id int, tableName string, cols []string, s inte
 	}
 
 	// This could be an error from the thing not existing which is not unexpected
-	err = backend.db.Get(s, sql, args...)
+	err = backend.db.Get(obj, sql, args...)
 	return
+}
+
+// TODO: Could return wasDeleted here so only in here has to check the kind of error
+func (backend Backend) updateSingle(id int, tableName, returning string, setMap map[string]interface{}, obj interface{}) (err error) {
+	sql, args, err := PSQLBuilder().
+		Update(tableName).
+		SetMap(setMap).
+		Where(sq.Eq{"id": id}).
+		Suffix(returning).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build query for update single.")
+		return err
+	}
+
+	// This could be an error from the thing not existing which is not unexpected
+	return backend.db.QueryRowx(sql, args...).StructScan(obj)
+}
+
+func (backend Backend) deleteSingle(id int, tableName string) (wasDeleted bool, err error) {
+	sql, args, err := PSQLBuilder().
+		Delete(tableName).
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build query for delete single.")
+		return false, err
+	}
+
+	result, err := backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete single query.")
+	}
+
+	numRowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.WithError(err).Error("Failed to determine how many rows were affected by delete query.")
+		return false, err
+	}
+
+	if numRowsAffected <= 0 {
+		return false, channels.ErrChannelNotFound
+	}
+
+	return true, err
 }

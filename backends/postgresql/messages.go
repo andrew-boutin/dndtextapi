@@ -135,31 +135,12 @@ func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
 // DeleteMessage deletes the Message in the database that matches
 // the given ID.
 func (backend Backend) DeleteMessage(id int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(messagesTable).
-		Where(sq.Eq{"id": id}).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build delete message query.")
-		return err
-	}
-
-	result, err := backend.db.Exec(sql, args...)
+	wasDeleted, err := backend.deleteSingle(id, messagesTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete message query.")
-		return err
-	}
-
-	numRowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.WithError(err).Error("Failed to determine how many messages were affected by delete message.")
-		return err
-	}
-
-	if numRowsAffected <= 0 {
+	} else if !wasDeleted {
 		return messages.ErrMessageNotFound
 	}
-
 	return err
 }
 
@@ -169,24 +150,14 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 	setMap := map[string]interface{}{
 		"content": m.Content,
 	}
-	sql, args, err := PSQLBuilder().
-		Update(messagesTable).
-		SetMap(setMap).
-		Where(sq.Eq{"id": id}).
-		Suffix(messagesReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build update message query.")
-		return nil, err
-	}
 
 	updatedMessage := &messages.Message{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(updatedMessage)
+	err := backend.updateSingle(id, messagesTable, messagesReturning, setMap, updatedMessage)
 	if err != nil {
 		if err == sqlP.ErrNoRows {
 			return nil, messages.ErrMessageNotFound
 		}
-		log.WithError(err).Error("Issue running update message query.")
+		log.WithError(err).Error("Issue with query for update message.")
 		return nil, err
 	}
 
