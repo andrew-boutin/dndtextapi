@@ -13,8 +13,8 @@ import (
 // RegisterUsersRoutes registers all of the Users routes with their
 // associated middleware.
 func RegisterUsersRoutes(g *gin.RouterGroup) {
-	g.GET("/users/:id", RequiredHeadersMiddleware(acceptHeader), GetUser)
-	g.PUT("/users/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateUser)
+	g.GET("/users/:id", ValidateHeaders(acceptHeader), GetUser)
+	g.PUT("/users/:id", ValidateHeaders(acceptHeader, contentTypeHeader), UpdateUser)
 	g.DELETE("/users/:id", DeleteUser)
 }
 

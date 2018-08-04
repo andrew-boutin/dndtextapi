@@ -15,10 +15,10 @@ import (
 // RegisterCharactersRoutes registers all of the character routes with their
 // associated middleware
 func RegisterCharactersRoutes(g *gin.RouterGroup) {
-	g.GET("/channels/:channelID/characters", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetCharacters)
-	g.POST("/channels/:channelID/characters", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), LoadChannelFromPathID, CreateCharacter)
-	g.GET("/channels/:channelID/characters/:id", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, LoadCharacter, GetCharacter)
-	g.PUT("/channels/:channelID/characters/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), LoadChannelFromPathID, UpdateCharacter)
+	g.GET("/channels/:channelID/characters", ValidateHeaders(acceptHeader), LoadChannelFromPathID, GetCharacters)
+	g.POST("/channels/:channelID/characters", ValidateHeaders(acceptHeader, contentTypeHeader), LoadChannelFromPathID, CreateCharacter)
+	g.GET("/channels/:channelID/characters/:id", ValidateHeaders(acceptHeader), LoadChannelFromPathID, LoadCharacter, GetCharacter)
+	g.PUT("/channels/:channelID/characters/:id", ValidateHeaders(acceptHeader, contentTypeHeader), LoadChannelFromPathID, UpdateCharacter)
 	g.DELETE("/channels/:channelID/characters/:id", LoadChannelFromPathID, LoadCharacter, DeleteCharacter)
 }
 

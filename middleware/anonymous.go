@@ -12,9 +12,9 @@ import (
 // RegisterAnonymousRoutes adds the anonymous routes
 func RegisterAnonymousRoutes(r *gin.Engine) {
 	g := r.Group("/public")
-	g.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetPublicChannels)
-	g.GET("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), GetPublicChannel)
-	g.GET("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetStoryMessagesInChannel)
+	g.GET("/channels", ValidateHeaders(acceptHeader), GetPublicChannels)
+	g.GET("/channels/:channelID", ValidateHeaders(acceptHeader), GetPublicChannel)
+	g.GET("/channels/:channelID/messages", ValidateHeaders(acceptHeader), LoadChannelFromPathID, GetStoryMessagesInChannel)
 }
 
 // GetPublicChannels retrieves all of the public Channels accessible

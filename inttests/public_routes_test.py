@@ -14,20 +14,20 @@ class TestPublicRoutes(TestBase):
 
     def test_get_channels(self):
         """Test the public get channels route."""
-        # Make sure not including the accept header isn't allowed
-        r = requests.get(f"{self.url}/channels")
+        # Make sure a bogus accept header is rejected
+        r = requests.get(f"{self.url}/channels", headers={"Accept": "Nothing"})
         assert r.status_code == 400
 
-        # Add the header and make sure the call is ok
+        # Add the correct header and make sure the call is ok
         r = requests.get(f"{self.url}/channels", headers=self.read_headers)
         assert r.status_code == 200
         # TODO: assert the contents
 
     def test_get_channel(self):
         """Test the public get channel route."""
-        # Make sure not including the accept header isn't allowed
+        # Make sure using a bad accept header isn't allowed
         url = f"{self.url}/channels/"
-        r = requests.get(f"{url}1")
+        r = requests.get(f"{url}1", headers={"Accept": "Nothing"})
         assert r.status_code == 400
 
         # Add the header and make sure the call is ok

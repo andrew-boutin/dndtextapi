@@ -17,10 +17,10 @@ import (
 // RegisterMessagesRoutes registers all of the Message routes with their
 // associated middleware.
 func RegisterMessagesRoutes(g *gin.RouterGroup) {
-	g.GET("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetMessages)
-	g.POST("/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), LoadChannelFromPathID, CreateMessage)
-	g.GET("/channels/:channelID/messages/:id", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, GetMessage)
-	g.PUT("/channels/:channelID/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateMessage)
+	g.GET("/channels/:channelID/messages", ValidateHeaders(acceptHeader), LoadChannelFromPathID, GetMessages)
+	g.POST("/channels/:channelID/messages", ValidateHeaders(acceptHeader, contentTypeHeader), LoadChannelFromPathID, CreateMessage)
+	g.GET("/channels/:channelID/messages/:id", ValidateHeaders(acceptHeader), LoadChannelFromPathID, GetMessage)
+	g.PUT("/channels/:channelID/messages/:id", ValidateHeaders(acceptHeader, contentTypeHeader), UpdateMessage)
 	g.DELETE("/channels/:channelID/messages/:id", DeleteMessage)
 }
 

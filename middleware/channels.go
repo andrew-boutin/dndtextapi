@@ -15,10 +15,10 @@ import (
 // RegisterChannelsRoutes registers all of the channel routes with their
 // associated middleware
 func RegisterChannelsRoutes(g *gin.RouterGroup) {
-	g.GET("/channels", RequiredHeadersMiddleware(acceptHeader), GetChannels)
-	g.POST("/channels", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), CreateChannel)
-	g.GET("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), GetChannel)
-	g.PUT("/channels/:channelID", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), UpdateChannel)
+	g.GET("/channels", ValidateHeaders(acceptHeader), GetChannels)
+	g.POST("/channels", ValidateHeaders(acceptHeader, contentTypeHeader), CreateChannel)
+	g.GET("/channels/:channelID", ValidateHeaders(acceptHeader), GetChannel)
+	g.PUT("/channels/:channelID", ValidateHeaders(acceptHeader, contentTypeHeader), UpdateChannel)
 	g.DELETE("/channels/:channelID", DeleteChannel)
 }
 

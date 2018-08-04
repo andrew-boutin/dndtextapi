@@ -22,7 +22,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 - Delete Channel has dependencies on Messages and Characters
 - Delete User has dependencies on Messages and Characters
-- Switch content-type and accept to validate if present.
 - Default to int for config file (no env var set)
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
@@ -42,6 +41,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - db column names use `_` between words
 - Separate file for sample data
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
+- Update docs that say the headers are required
 
 ### Admin routes session issue
 

@@ -15,27 +15,27 @@ import (
 // RegisterAdminRoutes adds the admin routes.
 func RegisterAdminRoutes(g *gin.RouterGroup) {
 	// Routes to admin channels
-	g.GET("/admin/channels", RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)
-	g.GET("/admin/channels/:channelID", RequiredHeadersMiddleware(acceptHeader), AdminGetChannel)
-	g.PUT("/admin/channels/:channelID", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateChannel)
+	g.GET("/admin/channels", ValidateHeaders(acceptHeader), AdminGetChannels)
+	g.GET("/admin/channels/:channelID", ValidateHeaders(acceptHeader), AdminGetChannel)
+	g.PUT("/admin/channels/:channelID", ValidateHeaders(acceptHeader, contentTypeHeader), AdminUpdateChannel)
 	g.DELETE("/admin/channels/:channelID", AdminDeleteChannel)
 
 	// Routes to admin messages
-	g.GET("/admin/channels/:channelID/messages", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, AdminGetMessages)
-	g.GET("/admin/messages/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetMessage)
-	g.PUT("/admin/messages/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateMessage)
+	g.GET("/admin/channels/:channelID/messages", ValidateHeaders(acceptHeader), LoadChannelFromPathID, AdminGetMessages)
+	g.GET("/admin/messages/:id", ValidateHeaders(acceptHeader), AdminGetMessage)
+	g.PUT("/admin/messages/:id", ValidateHeaders(acceptHeader, contentTypeHeader), AdminUpdateMessage)
 	g.DELETE("/admin/messages/:id", AdminDeleteMessage)
 
 	// Routes to admin users
-	g.GET("/admin/users", RequiredHeadersMiddleware(acceptHeader), AdminGetUsers)
-	g.GET("/admin/users/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetUser)
-	g.PUT("/admin/users/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateUser)
+	g.GET("/admin/users", ValidateHeaders(acceptHeader), AdminGetUsers)
+	g.GET("/admin/users/:id", ValidateHeaders(acceptHeader), AdminGetUser)
+	g.PUT("/admin/users/:id", ValidateHeaders(acceptHeader, contentTypeHeader), AdminUpdateUser)
 	g.DELETE("/admin/users/:id", AdminDeleteUser)
 
 	// Routes to admin Characters
-	g.GET("/admin/channels/:channelID/characters", RequiredHeadersMiddleware(acceptHeader), LoadChannelFromPathID, AdminGetCharacters)
-	g.GET("/admin/characters/:id", RequiredHeadersMiddleware(acceptHeader), AdminGetCharacter)
-	g.PUT("/admin/characters/:id", RequiredHeadersMiddleware(acceptHeader, contentTypeHeader), AdminUpdateCharacter)
+	g.GET("/admin/channels/:channelID/characters", ValidateHeaders(acceptHeader), LoadChannelFromPathID, AdminGetCharacters)
+	g.GET("/admin/characters/:id", ValidateHeaders(acceptHeader), AdminGetCharacter)
+	g.PUT("/admin/characters/:id", ValidateHeaders(acceptHeader, contentTypeHeader), AdminUpdateCharacter)
 	g.DELETE("/admin/characters/:id", AdminDeleteCharacter)
 }
 
