@@ -3,6 +3,7 @@
 package postgresql
 
 import (
+	sqlP "database/sql"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -110,7 +111,11 @@ func initSchema(db *sqlx.DB) error {
 	return nil
 }
 
-func (backend Backend) getSingle(id int, tableName string, cols []string, obj interface{}) (err error) {
+// getSingle retrieves a single row from the given table matching the given id. The columns
+// retrieved are also determined from the input. The resulting record is loaded into the
+// input object, not returned, so a pointer should be passed in for persistance. If no record
+// exists then the return flag will be false.
+func (backend Backend) getSingle(id int, tableName string, cols []string, obj interface{}) (wasFound bool, err error) {
 	sql, args, err := PSQLBuilder().
 		Select(cols...).
 		From(tableName).
@@ -118,16 +123,26 @@ func (backend Backend) getSingle(id int, tableName string, cols []string, obj in
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Issue building query for get single.")
-		return err
+		return false, err
 	}
 
 	// This could be an error from the thing not existing which is not unexpected
 	err = backend.db.Get(obj, sql, args...)
-	return
+	if err != nil {
+		if err == sqlP.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, err
 }
 
-// TODO: Could return wasDeleted here so only in here has to check the kind of error
-func (backend Backend) updateSingle(id int, tableName, returning string, setMap map[string]interface{}, obj interface{}) (err error) {
+// updateSingle updates a single row from the given table matching the given id. The input map
+// determines what columns should be updated to what values. The returning parameter dictates
+// what fields to retrieve after the update. The resulting record is loaded into the
+// input object, not returned, so a pointer should be passed in for persistance. If no record
+// exists then the return flag will be false.
+func (backend Backend) updateSingle(id int, tableName, returning string, setMap map[string]interface{}, obj interface{}) (wasFound bool, err error) {
 	sql, args, err := PSQLBuilder().
 		Update(tableName).
 		SetMap(setMap).
@@ -136,14 +151,23 @@ func (backend Backend) updateSingle(id int, tableName, returning string, setMap 
 		ToSql()
 	if err != nil {
 		log.WithError(err).Error("Failed to build query for update single.")
-		return err
+		return false, err
 	}
 
 	// This could be an error from the thing not existing which is not unexpected
-	return backend.db.QueryRowx(sql, args...).StructScan(obj)
+	err = backend.db.QueryRowx(sql, args...).StructScan(obj)
+	if err != nil {
+		if err == sqlP.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, err
 }
 
-func (backend Backend) deleteSingle(id int, tableName string) (wasDeleted bool, err error) {
+// deleteSingle deletes a single row from the given table matching the given id. If no record
+// exists then the return flag will be false.
+func (backend Backend) deleteSingle(id int, tableName string) (wasFound bool, err error) {
 	sql, args, err := PSQLBuilder().
 		Delete(tableName).
 		Where(sq.Eq{"id": id}).
@@ -169,4 +193,38 @@ func (backend Backend) deleteSingle(id int, tableName string) (wasDeleted bool, 
 	}
 
 	return true, err
+}
+
+// createSingle creates a single row in the given table. The input map determines what columns
+// should be set to what values. The returning parameter dictates what fields to retrieve after
+// the create. The resulting record is loaded into the input object, not returned, so a pointer
+// should be passed in for persistance.
+func (backend Backend) createSingle(tableName, returning string, kvs map[string]interface{}, obj interface{}) (err error) {
+	cols := make([]string, len(kvs))
+	vals := make([]interface{}, len(kvs))
+	i := 0
+	for k, v := range kvs {
+		cols[i] = k
+		vals[i] = v
+		i++
+	}
+
+	sql, args, err := PSQLBuilder().
+		Insert(tableName).
+		Columns(cols...).
+		Values(vals...).
+		Suffix(returning).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Issue building create single sql.")
+		return err
+	}
+
+	err = backend.db.QueryRowx(sql, args...).StructScan(obj)
+	if err != nil {
+		log.WithError(err).Error("Issue running create single sql.")
+		return err
+	}
+
+	return
 }

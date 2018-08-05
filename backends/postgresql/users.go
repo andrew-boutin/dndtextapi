@@ -83,13 +83,12 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 	}
 
 	updatedUser := &users.User{}
-	err := backend.updateSingle(id, usersTable, usersReturning, setMap, updatedUser)
+	wasFound, err := backend.updateSingle(id, usersTable, usersReturning, setMap, updatedUser)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, users.ErrUserNotFound
-		}
 		log.WithError(err).Error("Issue with query for update user.")
 		return nil, err
+	} else if !wasFound {
+		return nil, users.ErrUserNotFound
 	}
 
 	return updatedUser, nil
@@ -97,10 +96,10 @@ func (backend Backend) UpdateUser(id int, u *users.User) (*users.User, error) {
 
 // DeleteUser removes a User from the Users table.
 func (backend Backend) DeleteUser(userID int) error {
-	wasDeleted, err := backend.deleteSingle(userID, usersTable)
+	wasFound, err := backend.deleteSingle(userID, usersTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete user query.")
-	} else if !wasDeleted {
+	} else if !wasFound {
 		return users.ErrUserNotFound
 	}
 	return err
@@ -109,13 +108,12 @@ func (backend Backend) DeleteUser(userID int) error {
 // GetUserByID retrieves a User by using the given id.
 func (backend Backend) GetUserByID(id int) (*users.User, error) {
 	user := &users.User{}
-	err := backend.getSingle(id, usersTable, userColumns, user)
+	wasFound, err := backend.getSingle(id, usersTable, userColumns, user)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, users.ErrUserNotFound
-		}
 		log.WithError(err).Error("Query issue for get user.")
 		return nil, err
+	} else if !wasFound {
+		return nil, users.ErrUserNotFound
 	}
 
 	return user, nil
@@ -148,21 +146,15 @@ func (backend Backend) GetUserByEmail(email string) (*users.User, error) {
 
 // CreateUser creates a new User in the database using the provided data.
 func (backend Backend) CreateUser(gu *users.GoogleUser) (*users.User, error) {
-	sql, args, err := PSQLBuilder().
-		Insert(usersTable).
-		Columns("username", "email").
-		Values(gu.Email, gu.Email).
-		Suffix(usersReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Issue building create user sql.")
-		return nil, err
+	kvs := map[string]interface{}{
+		"username": gu.Email,
+		"email":    gu.Email,
 	}
 
 	newUser := &users.User{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(newUser)
+	err := backend.createSingle(usersTable, usersReturning, kvs, newUser)
 	if err != nil {
-		log.WithError(err).Error("Issue running create user sql.")
+		log.WithError(err).Error("Issue with create user sql.")
 		return nil, err
 	}
 

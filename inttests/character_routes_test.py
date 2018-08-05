@@ -3,16 +3,8 @@
 import requests, pytest
 from base import TestBase
 
+# TODO: Update, Delete, Create, Get - requires session fix
 class TestCharacterRoutes(TestBase):
-
-    # TODO: Teardown delete the channel?
-    @pytest.fixture()
-    def create_channel_normal_user(self): # TODO: Input variable for what user to create the channel for?
-        cookies = self.get_authn_cookies_user_normal()
-
-        r = requests.post(f'{self.base}/channels')
-        assert 200 == r.status_code
-        return r.json()
 
     def setup_method(self, test_method):
         super(TestCharacterRoutes, self).setup_method(test_method)

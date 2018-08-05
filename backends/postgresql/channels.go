@@ -3,7 +3,6 @@
 package postgresql
 
 import (
-	sqlP "database/sql"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -38,13 +37,12 @@ func init() {
 // GetChannel retrieves the channel corresponding to the given id.
 func (backend Backend) GetChannel(id int) (*channels.Channel, error) {
 	channel := &channels.Channel{}
-	err := backend.getSingle(id, channelsTable, channelColumns, channel)
+	wasFound, err := backend.getSingle(id, channelsTable, channelColumns, channel)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, channels.ErrChannelNotFound
-		}
 		log.WithError(err).Error("Query issue for get channel.")
 		return nil, err
+	} else if !wasFound {
+		return nil, channels.ErrChannelNotFound
 	}
 
 	return channel, nil
@@ -132,23 +130,22 @@ func (backend Backend) runMultiChannelQuery(sql string, args []interface{}) (cha
 
 // CreateChannel creates a new channel using the provided channel info
 // and returns the result from the database.
+// TODO: What is userID for?
 func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels.Channel, error) {
 	// TODO: Don't require description, default isprivate to false
-	sql, args, err := PSQLBuilder().
-		Insert(channelsTable).
-		Columns("name", "description", "topic", "owner_id", "is_private", "dm_id").
-		Values(c.Name, c.Description, c.OwnerID, c.IsPrivate, c.DMID).
-		Suffix(channelsReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Issue building create channel sql.")
-		return nil, err
+	kvs := map[string]interface{}{
+		"name":        c.Name,
+		"description": c.Description,
+		"topic":       c.Topic,
+		"owner_id":    c.OwnerID,
+		"is_private":  c.IsPrivate,
+		"dm_id":       c.DMID,
 	}
 
 	newChannel := &channels.Channel{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(newChannel)
+	err := backend.createSingle(channelsTable, channelsReturning, kvs, newChannel)
 	if err != nil {
-		log.WithError(err).Error("Issue running create channel sql.")
+		log.WithError(err).Error("Issue with create channel sql.")
 		return nil, err
 	}
 
@@ -157,10 +154,10 @@ func (backend Backend) CreateChannel(c *channels.Channel, userID int) (*channels
 
 // DeleteChannel deletes the channel that corresponds to the given ID.
 func (backend Backend) DeleteChannel(id int) error {
-	wasDeleted, err := backend.deleteSingle(id, channelsTable)
+	wasFound, err := backend.deleteSingle(id, channelsTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete channel query.")
-	} else if !wasDeleted {
+	} else if !wasFound {
 		return channels.ErrChannelNotFound
 	}
 	return err
@@ -179,13 +176,12 @@ func (backend Backend) UpdateChannel(id int, c *channels.Channel) (*channels.Cha
 	}
 
 	updatedChannel := &channels.Channel{}
-	err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedChannel)
+	wasFound, err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedChannel)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, channels.ErrChannelNotFound
-		}
 		log.WithError(err).Error("Issue with query for update channel.")
 		return nil, err
+	} else if !wasFound {
+		return nil, channels.ErrChannelNotFound
 	}
 
 	return updatedChannel, nil

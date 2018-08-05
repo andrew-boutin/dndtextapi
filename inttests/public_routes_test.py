@@ -58,13 +58,13 @@ class TestPublicRoutes(TestBase):
         r = requests.get(url, headers=self.read_headers)
         assert r.status_code == 404
 
-        # Make sure not including the accept header isn't allowed
+        # Use a public channel for a valid request
         url = messages_url % 1
         r = requests.get(url)
-        assert r.status_code == 400
+        assert r.status_code == 200
+        # TODO: assert the contents - no meta messages
 
-        # Use a public channel for a valid request
+        # Make sure not including the accept header is fine
         url = messages_url % 1
         r = requests.get(url, headers=self.read_headers)
         assert r.status_code == 200
-        # TODO: assert the contents - no meta messages

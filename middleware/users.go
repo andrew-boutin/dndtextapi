@@ -47,6 +47,7 @@ func UpdateUser(c *gin.Context) {
 
 	userIDFromPath, err := PathParamAsIntExtractor(c, idPathParam)
 	if err != nil {
+		log.WithError(err).Error("Failed to get user id from path.")
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -61,13 +62,15 @@ func UpdateUser(c *gin.Context) {
 	userBody := &users.User{}
 	err = c.Bind(userBody)
 	if err != nil {
+		log.WithError(err).Error("Issue reading user from request body.")
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	updatedUser, err := dbBackend.UpdateUser(user.ID, userBody)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.WithError(err).Error("Failed to update user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

@@ -98,21 +98,15 @@ func (backend Backend) GetCharactersInChannel(channelID int) (characters.Charact
 
 // CreateCharacter creates a new Character in the given Channel with the given data.
 func (backend Backend) CreateCharacter(c *characters.Character) (*characters.Character, error) {
-	sql, args, err := PSQLBuilder().
-		Insert(charactersTable).
-		Columns("user_id", "channel_id").
-		Values(c.UserID, c.ChannelID).
-		Suffix(charactersReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Issue building create character sql.")
-		return nil, err
+	kvs := map[string]interface{}{
+		"user_id":    c.UserID,
+		"channel_id": c.ChannelID,
 	}
 
 	newChar := &characters.Character{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(newChar)
+	err := backend.createSingle(charactersTable, charactersReturning, kvs, newChar)
 	if err != nil {
-		log.WithError(err).Error("Issue running create character sql.")
+		log.WithError(err).Error("Issue with create character sql.")
 		return nil, err
 	}
 
@@ -128,13 +122,12 @@ func (backend Backend) UpdateCharacter(id int, c *characters.Character) (*charac
 	}
 
 	updatedCharacter := &characters.Character{}
-	err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedCharacter)
+	wasFound, err := backend.updateSingle(id, channelsTable, channelsReturning, setMap, updatedCharacter)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, characters.ErrCharacterNotFound
-		}
 		log.WithError(err).Error("Issue with query for update character.")
 		return nil, err
+	} else if !wasFound {
+		return nil, characters.ErrCharacterNotFound
 	}
 
 	return updatedCharacter, nil
@@ -142,10 +135,10 @@ func (backend Backend) UpdateCharacter(id int, c *characters.Character) (*charac
 
 // DeleteCharacter deletes the Character matching the input ID.
 func (backend Backend) DeleteCharacter(characterID int) error {
-	wasDeleted, err := backend.deleteSingle(characterID, charactersTable)
+	wasFound, err := backend.deleteSingle(characterID, charactersTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete user query.")
-	} else if !wasDeleted {
+	} else if !wasFound {
 		return characters.ErrCharacterNotFound
 	}
 	return err
@@ -154,13 +147,12 @@ func (backend Backend) DeleteCharacter(characterID int) error {
 // GetCharacter retrieves a single Character by ID.
 func (backend Backend) GetCharacter(id int) (*characters.Character, error) {
 	char := &characters.Character{}
-	err := backend.getSingle(id, channelsTable, characterColumns, char)
+	wasFound, err := backend.getSingle(id, channelsTable, characterColumns, char)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, characters.ErrCharacterNotFound
-		}
 		log.WithError(err).Error("Query issue for get character.")
 		return nil, err
+	} else if !wasFound {
+		return nil, characters.ErrCharacterNotFound
 	}
 
 	return char, nil

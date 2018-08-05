@@ -20,7 +20,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- createSingle function in backend and refactor
 - Delete Channel has dependencies on Messages and Characters
 - Delete User has dependencies on Messages and Characters`
 - QueryParamExtractor no error. QueryParamExtractorRequired error.

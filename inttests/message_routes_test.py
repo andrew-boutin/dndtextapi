@@ -3,6 +3,7 @@
 import requests
 from base import TestBase
 
+# TODO: Update, Delete, Create, Get - requires session fix
 class TestMessageRoutes(TestBase):
 
     def setup_method(self, test_method):

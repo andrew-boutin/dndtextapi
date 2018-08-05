@@ -1,7 +1,7 @@
 # Copyright (C) 2018, Baking Bits Studios - All Rights Reserved
 
-import unittest, requests, json, string
-from random import choice
+import requests, json, string, pytest
+from random import choice, randint
 from mockserver import MockServerClient, request, response
 
 class TestBase:
@@ -74,3 +74,19 @@ class TestBase:
         assert 204 == r.status_code
         cookie = r.cookies['dndtextapisession']
         return dict(dndtextapisession=cookie)
+
+    # TODO: Teardown delete the channel
+    @pytest.fixture()
+    def create_channel_normal_user(self): # TODO: Input variable for what user to create the channel for
+        cookies = self.get_authn_cookies_user_normal()
+
+        data = json.dumps({
+            "OwnerID": 4,
+            "DMID": 4,
+            "Name": "test channel " + str(randint(0, 1000000)),
+            "IsPrivate": False
+        })
+
+        r = requests.post(f'{self.base}/channels', data=data, headers=self.read_write_headers, cookies=cookies)
+        assert 201 == r.status_code
+        return r.json()

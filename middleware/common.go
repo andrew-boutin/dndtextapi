@@ -25,6 +25,7 @@ const (
 
 	// Other
 	applicationJSONHeaderVal = "application/json"
+	anyMedia                 = "*/*"
 	idPathParam              = "id"
 	channelIDPathParam       = "channelID"
 )
@@ -110,7 +111,7 @@ func ValidateHeaders(headers ...string) gin.HandlerFunc {
 			if len(val) > 0 {
 				switch header {
 				case acceptHeader:
-					if val != applicationJSONHeaderVal {
+					if val != applicationJSONHeaderVal && val != anyMedia {
 						// TODO: 415 Unsupported Media Type?
 						log.WithField(acceptHeader, val).Error("Invalid header value.")
 						c.AbortWithError(http.StatusBadRequest, c.Error(fmt.Errorf("invalid %s header value %s", acceptHeader, val)))

@@ -3,7 +3,6 @@
 package postgresql
 
 import (
-	sqlP "database/sql"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -76,21 +75,16 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 
 // CreateMessage creates a new Message in the database using the provided data.
 func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, error) {
-	sql, args, err := PSQLBuilder().
-		Insert(messagesTable).
-		Columns("character_id", "channel_id", "content").
-		Values(m.CharacterID, m.ChannelID, m.Content).
-		Suffix(messagesReturning).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Issue building create message sql.")
-		return nil, err
+	kvs := map[string]interface{}{
+		"character_id": m.CharacterID,
+		"channel_id":   m.ChannelID,
+		"content":      m.Content,
 	}
 
 	newMessage := &messages.Message{}
-	err = backend.db.QueryRowx(sql, args...).StructScan(newMessage)
+	err := backend.createSingle(messagesTable, messagesReturning, kvs, newMessage)
 	if err != nil {
-		log.WithError(err).Error("Issue running create message sql.")
+		log.WithError(err).Error("Issue with create message sql.")
 		return nil, err
 	}
 
@@ -101,13 +95,11 @@ func (backend Backend) CreateMessage(m *messages.Message) (*messages.Message, er
 // given ID.
 func (backend Backend) GetMessage(id int) (*messages.Message, error) {
 	message := &messages.Message{}
-	err := backend.getSingle(id, messagesTable, messageColumns, message)
+	wasFound, err := backend.getSingle(id, messagesTable, messageColumns, message)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, messages.ErrMessageNotFound
-		}
-		log.WithError(err).Error("Query issue for get message.")
 		return nil, err
+	} else if !wasFound {
+		return nil, messages.ErrMessageNotFound
 	}
 
 	return message, nil
@@ -135,10 +127,10 @@ func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
 // DeleteMessage deletes the Message in the database that matches
 // the given ID.
 func (backend Backend) DeleteMessage(id int) error {
-	wasDeleted, err := backend.deleteSingle(id, messagesTable)
+	wasFound, err := backend.deleteSingle(id, messagesTable)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete message query.")
-	} else if !wasDeleted {
+	} else if !wasFound {
 		return messages.ErrMessageNotFound
 	}
 	return err
@@ -152,13 +144,12 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 	}
 
 	updatedMessage := &messages.Message{}
-	err := backend.updateSingle(id, messagesTable, messagesReturning, setMap, updatedMessage)
+	wasFound, err := backend.updateSingle(id, messagesTable, messagesReturning, setMap, updatedMessage)
 	if err != nil {
-		if err == sqlP.ErrNoRows {
-			return nil, messages.ErrMessageNotFound
-		}
 		log.WithError(err).Error("Issue with query for update message.")
 		return nil, err
+	} else if !wasFound {
+		return nil, messages.ErrMessageNotFound
 	}
 
 	return updatedMessage, nil
