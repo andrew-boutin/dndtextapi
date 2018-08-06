@@ -37,6 +37,7 @@ type Backend interface {
 	UpdateMessage(int, *messages.Message) (*messages.Message, error)
 	DeleteMessagesFromUser(int) error
 	DeleteMessagesFromChannel(int) error
+	DeleteMessagesFromCharacter(int) error
 
 	// Users functionality
 	UpdateUser(int, *users.User) (*users.User, error)

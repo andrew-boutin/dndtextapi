@@ -5,6 +5,8 @@ package postgresql
 import (
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/messages"
 	log "github.com/sirupsen/logrus"
@@ -173,6 +175,25 @@ func (backend Backend) DeleteMessagesFromUser(userID int) error {
 	_, err = backend.db.Exec(sql, args...)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete messages from user query.")
+	}
+	return err
+}
+
+// DeleteMessagesFromCharacter deletes all of the messages that match the input
+// Character ID.
+func (backend Backend) DeleteMessagesFromCharacter(characterID int) error {
+	sql, args, err := PSQLBuilder().
+		Delete(messagesTable).
+		Where(squirrel.Eq{"character_id": characterID}).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build delete messages from character sql.")
+		return err
+	}
+
+	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete messages from character query.")
 	}
 	return err
 }

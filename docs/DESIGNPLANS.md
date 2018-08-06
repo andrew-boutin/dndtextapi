@@ -21,7 +21,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- Delete messsages on delete character.
 - Int tests for delete character, channel, and user. Verify dependent objects actually get deleted.
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
