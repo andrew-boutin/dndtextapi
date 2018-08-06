@@ -12,13 +12,13 @@ var ErrCharacterNotFound = fmt.Errorf("character not found")
 
 // Character holds all of the information that makes up a Character.
 type Character struct {
-	ID          int       `db:"id"`
-	ChannelID   int       `db:"channel_id"`
-	UserID      int       `db:"user_id"`
-	Name        string    `db:"id"`
-	Description string    `db:"id"`
-	CreatedOn   time.Time `db:"created_on"`
-	LastUpdated time.Time `db:"last_updated"`
+	ID          int       `json:"ID" db:"id"`
+	ChannelID   int       `json:"ChannelID" db:"channel_id"`
+	UserID      int       `json:"UserID" db:"user_id"`
+	Name        string    `json:"Name" db:"name"`
+	Description string    `json:"Description" db:"description"`
+	CreatedOn   time.Time `json:"CreatedOn" db:"created_on"`
+	LastUpdated time.Time `json:"LastUpdated" db:"last_updated"`
 }
 
 // CharacterCollection is a collection of Characters

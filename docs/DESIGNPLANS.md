@@ -5,11 +5,11 @@ Some of the stuff that still has to be done and notes about how to do some of it
 ## Features
 
 - Add user_id to message? Would simplify a lot of logic. Don't allow update to this field.
+- Characters managed under `/characters` and use query params to specify either a user or channel
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
 - *Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases (won't need every route)
 - Summary on get all vs full on get single
 - Message story "sub-types" (dice roll, emote, talk, DM, adventure goal/topic change, etc..)
-- User/channel characters
 - Channel notes, inventory, etc.
 - Transactions per route for rollbacks
 - Swagger spec
@@ -40,49 +40,6 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Separate file for sample data
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
 - Update docs that say the headers are required
-
-### Admin routes session issue
-
-Update - disabled required headers. Used browser to go to /admin/channels and /channels. Authentication worked
-for both. Seems that the issue may be related to how I'm copying the cookie for the postman requests.
-
-TODO: Authn and then go to /admin route in browser and observe server response.
-TODO: Potentially related to non variable cookie initializer
-TODO: Potentially related to copy/pasting cookie without path info etc.
-
-Set up with `RegisterAdminRoutes(authorized)`
-and admin route `g.GET("/test", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
-while admin route `g.GET("/admin/users", RequireAdminHandler, RequiredHeadersMiddleware(acceptHeader), AdminGetUsers)` gets 401
-
-```bash
-[sessions] ERROR! securecookie: the value is not valid
-time="2018-07-20T01:31:02Z" level=error msg="No session data found denying access."
-[GIN] 2018/07/20 - 01:31:02 | 401 |    6.550323ms |      172.19.0.1 | GET      /admin/users
-```
-
-and you end up with 3 cookies in the response. One for `/`, `/admin`, and `/admin/users`.
-
-Set up with
-
-```go
-admin := authorized.Group("/")
-admin.Use(RequireAdminHandler)
-RegisterAdminRoutes(admin)
-```
-
-while admin route `g.GET("/test", RequiredHeadersMiddleware(acceptHeader), AdminGetChannels)` works fine
-and admin route `g.GET("/admin/messages", RequiredHeadersMiddleware(acceptHeader), AdminGetMessages)` gets 401
-
-```bash
-[sessions] ERROR! securecookie: the value is not valid
-time="2018-07-20T01:43:01Z" level=error msg="No session data found denying access."
-[GIN] 2018/07/20 - 01:43:01 | 401 |       790.1µs |      172.19.0.1 | GET      /admin/users
-```
-
-and you end up with 3 cookies in the response. One for `/`, `/admin`, and `/admin/users`.
-
-Problem appears to be related to routes that have multiple slashes (aside from for /:id). So routes that are
-`/...` work while `/.../...` have session issues.
 
 ### Bot OBO User
 
