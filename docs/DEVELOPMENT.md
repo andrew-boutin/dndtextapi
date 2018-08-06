@@ -2,9 +2,9 @@
 
 ## Manual Endpoint Testing
 
-Most of the endpoints require headers like `CONTENT-TYPE` and/or `ACCEPT`. Also, many of the endpoints are for operations other than `GET`. This makes hitting the endpoints directly through the browser mostly unusable. On top of this, most endpoints require authentication which requires sending a cookie along with your requests so things like `curl` and standard `Postman` can't be used out of the box either.
+Most of the functionality in the API doesn't use `GET` which makes manual testing using the browser tedious by having to use Javascript with the dev tools. Also, most endpoints require authentication, which requires sending a cookie along with your requests after signing in using a browser, so things like `curl` and standard `Postman` can't be used out of the box.
 
-However, you can a combintation of `Chrome`, `Postman`, and `Interceptor` to be able to easily make REST API requests.
+However, you can use a combintation of `Chrome`, `Postman`, and `Interceptor` to be able to easily make REST API requests.
 
 ### Installation and Setup
 
@@ -22,13 +22,13 @@ Enable `Postman Interceptor` in the `Postman Chrome App` by clicking on the icon
 
 In `Chrome`, browse to `localhost:8080/login`. If you haven't logged into Google for the `dndtextapi` application lately you should be redirected to a Google login page. Log in. After you log in (or if you were still authenticated) you'll be redirected to a blank page with a URL that looks something like `http://localhost:8080/callback?state=<some_state>&code=<some_code>`.
 
-At this point you have authenticated with Google, the app successfully loaded your User, and a session was initiated for you. Now you need to get your cookie to make new requests. In `Chrome` browse to `localhost:8080/channels`. This will force your browser to send a GET request to the REST API using the cookie from your session.
+At this point you have authenticated with Google, the app successfully loaded your User, and a session was initiated for you. Now you need to get your cookie to make new requests. In `Chrome` navigate to `localhost:8080/channels`. This will force your browser to send a `GET` request to the REST API using the cookie from your session.
 
-In the `Postman Chrome App` look in the History sidebar and find the `localhost:8080/login` request and click on it. This should open up that particular request in the main part of the screen. Click on the "Headers" tab and find the "Cookie" header. Copy the Value which should look something like `dndtextapisession=<some_stuff_here>`.
+In the `Postman Chrome App` look in the History sidebar and find the `localhost:8080/channels` request and click on it. This should open up that particular request in the main part of the screen. Click on the *Headers* tab and find the *Cookie* header. Copy the *Value* which should look something like `dndtextapisession=<some_stuff_here>`.
 
-Create a new request in the `Postman Chrome App` (either use the `New` button or click the `+` icon next to the request tabs). Set up the request to be a `GET` on `localhost:8080/channels` and create a header of "Key" `Accept` with "Value" `application/json`. Next, add another header with "Key" `Cookie` and "Value" using the copied cookie value from the previous step. Issue the request (click `Send`) and you should get a valid response.
+Create a new request in the `Postman Chrome App` (either use the `New` button or click the `+` icon next to the request tabs). Set up the request to be a `GET` on `localhost:8080/channels`. Add a header with *Key* `Cookie` and *Value* using the copied cookie value from the previous step. Issue the request (click `Send`) and you should get a valid response.
 
-Using the same cookie header, you'll be able to make other requests to different paths with different operations and various other headers.
+You'll be able to make other requests to different paths with different operations using the same cookie header.
 
 ### Workarounds
 

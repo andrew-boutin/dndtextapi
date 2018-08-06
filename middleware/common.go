@@ -44,6 +44,8 @@ const (
 	memberLevel     = "member"
 )
 
+var acceptHeaderValsAllowed = []string{applicationJSONHeaderVal, anyMedia}
+
 // Errors used throughout the middleware.
 var (
 	// ErrPathParamNotFound is the error to use when a parameter is expected but
@@ -111,7 +113,11 @@ func ValidateHeaders(headers ...string) gin.HandlerFunc {
 			if len(val) > 0 {
 				switch header {
 				case acceptHeader:
-					if val != applicationJSONHeaderVal && val != anyMedia {
+					// This will parse accept header values such as
+					// `text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8` (Firefox default)
+					// and return the first match with the input allowed values. No matches results in "".
+					acceptVal := c.NegotiateFormat(acceptHeaderValsAllowed...)
+					if acceptVal == "" {
 						// TODO: 415 Unsupported Media Type?
 						log.WithField(acceptHeader, val).Error("Invalid header value.")
 						c.AbortWithError(http.StatusBadRequest, c.Error(fmt.Errorf("invalid %s header value %s", acceptHeader, val)))
