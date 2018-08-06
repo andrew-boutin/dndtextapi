@@ -161,6 +161,8 @@ func DeleteCharacter(c *gin.Context) {
 		return
 	}
 
+	// TODO: Delete dependent messages
+
 	err := dbBackend.DeleteCharacter(character.ID)
 	if err != nil {
 		log.WithError(err).WithField("characterID", character.ID).Error("Failed to delete character.")

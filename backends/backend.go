@@ -35,6 +35,8 @@ type Backend interface {
 	CreateMessage(*messages.Message) (*messages.Message, error)
 	DeleteMessage(int) error
 	UpdateMessage(int, *messages.Message) (*messages.Message, error)
+	DeleteMessagesFromUser(int) error
+	DeleteMessagesFromChannel(int) error
 
 	// Users functionality
 	UpdateUser(int, *users.User) (*users.User, error)
@@ -52,6 +54,8 @@ type Backend interface {
 	CreateCharacter(*characters.Character) (*characters.Character, error)
 	DeleteCharacter(int) error
 	UpdateCharacter(int, *characters.Character) (*characters.Character, error)
+	DeleteCharactersFromUser(int) error
+	DeleteCharactersFromChannel(int) error
 }
 
 // InitBackend initializes whatever backend matches the provided

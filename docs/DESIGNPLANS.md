@@ -4,6 +4,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Features
 
+- Add user_id to message? Would simplify a lot of logic. Don't allow update to this field.
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
 - *Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases (won't need every route)
 - Summary on get all vs full on get single
@@ -20,15 +21,15 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- Delete Channel has dependencies on Messages and Characters
-- Delete User has dependencies on Messages and Characters`
+- Delete messsages on delete character.
+- Int tests for delete character, channel, and user. Verify dependent objects actually get deleted.
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md
 - Get around having to rebuild docker images (map volume on startup or something etc.)
 - Context err body in JSON format. One liner?
 - Missing unit tests. A single test file in each package should get code coverage to report accurately.
-- Add more middleware loggin
+- Add more middleware logging
 - 404 consistent handling. Remove duplicate checks. Make sure everywhere supports it.
 - Notes about connecting and inspecting the database.
 - Restrict permissions for db api user.
@@ -41,6 +42,9 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Update docs that say the headers are required
 
 ### Admin routes session issue
+
+Update - disabled required headers. Used browser to go to /admin/channels and /channels. Authentication worked
+for both. Seems that the issue may be related to how I'm copying the cookie for the postman requests.
 
 TODO: Authn and then go to /admin route in browser and observe server response.
 TODO: Potentially related to non variable cookie initializer

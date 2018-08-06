@@ -94,7 +94,19 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// TODO: What about Messages & Channel memberships?
+	err = dbBackend.DeleteMessagesFromUser(userIDFromPath)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete messages from user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = dbBackend.DeleteCharactersFromUser(userIDFromPath)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete characters from user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	err = dbBackend.DeleteUser(user.ID)
 	if err != nil {
