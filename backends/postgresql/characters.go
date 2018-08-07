@@ -6,8 +6,6 @@ import (
 	sqlP "database/sql"
 	"fmt"
 
-	"github.com/Masterminds/squirrel"
-
 	"github.com/andrew-boutin/dndtextapi/characters"
 	log "github.com/sirupsen/logrus"
 
@@ -163,7 +161,7 @@ func (backend Backend) GetCharacter(id int) (*characters.Character, error) {
 // DeleteCharactersFromUser deletes all of the Characters for the given
 // User.
 func (backend Backend) DeleteCharactersFromUser(userID int) error {
-	err := backend.deleteCharacters("user_id", userID)
+	err := backend.deleteMultiple(channelsTable, "user_id", userID)
 	if err != nil {
 		log.WithError(err).Error("Issue with delete characters from user query.")
 	}
@@ -173,28 +171,9 @@ func (backend Backend) DeleteCharactersFromUser(userID int) error {
 // DeleteCharactersFromChannel deletes all of the Characters for the given
 // Channel.
 func (backend Backend) DeleteCharactersFromChannel(channelID int) error {
-	err := backend.deleteCharacters("channel_id", channelID)
+	err := backend.deleteMultiple(charactersTable, "channel_id", channelID)
 	if err != nil {
 		log.WithError(err).Error("Issue with delete characters from channel query.")
-	}
-	return err
-}
-
-// deleteCharacters deletes all of the Characters that have their given column
-// from the input matching the given id from the input.
-func (backend Backend) deleteCharacters(col string, id int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(charactersTable).
-		Where(squirrel.Eq{col: id}).
-		ToSql()
-	if err != nil {
-		log.WithError(err).Error("Failed to build delete characters query.")
-		return err
-	}
-
-	_, err = backend.db.Exec(sql, args...)
-	if err != nil {
-		log.WithError(err).Error("Failed to execute delete characters query.")
 	}
 	return err
 }
