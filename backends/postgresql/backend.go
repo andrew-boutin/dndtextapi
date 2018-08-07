@@ -228,3 +228,22 @@ func (backend Backend) createSingle(tableName, returning string, kvs map[string]
 
 	return
 }
+
+// deleteMultiple deletes all rows from the input table where the given column
+// matches the input id.
+func (backend Backend) deleteMultiple(table, col string, id int) error {
+	sql, args, err := PSQLBuilder().
+		Delete(table).
+		Where(sq.Eq{col: id}).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build delete multiple query.")
+		return err
+	}
+
+	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete multiple query.")
+	}
+	return err
+}
