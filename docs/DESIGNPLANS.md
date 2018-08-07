@@ -4,6 +4,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Features
 
+- Add user_id to message? Would simplify a lot of logic. Don't allow update to this field.
 - Characters managed under `/characters` and use query params to specify either a user or channel
 - **User logout: quick attempt ran into issue where session would just get re-created on next api request
 - *Application authn - send messages on behalf of a user (ex: Slack bot) - new use cases (won't need every route)
@@ -20,8 +21,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 
 ## Fix Ups
 
-- Delete Channel has dependencies on Messages and Characters
-- Delete User has dependencies on Messages and Characters
+- Int tests for delete character, channel, and user. Verify dependent objects actually get deleted.
 - QueryParamExtractor no error. QueryParamExtractorRequired error.
 - Need an err msg somewhere when a container fails so example int tests in travis can easily tell why the app didn't start
 - app takes a while to fully come up now may be related to govendor cmd change - may be able to add another step to dockerfile - https://github.com/kardianos/govendor/blob/master/doc/faq.md

@@ -131,6 +131,7 @@ func DeleteChannel(c *gin.Context) {
 
 	channelID, err := PathParamAsIntExtractor(c, channelIDPathParam)
 	if err != nil {
+		log.WithError(err).Error("Failed to get channel id from path.")
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -141,7 +142,8 @@ func DeleteChannel(c *gin.Context) {
 			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.WithError(err).Error("Failed to get existing channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -151,9 +153,24 @@ func DeleteChannel(c *gin.Context) {
 		return
 	}
 
+	err = dbBackend.DeleteMessagesFromChannel(channelID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete messages from channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = dbBackend.DeleteCharactersFromChannel(channelID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete characters from channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
 	err = dbBackend.DeleteChannel(channelID)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.WithError(err).Error("Failed to delete channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

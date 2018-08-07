@@ -126,6 +126,20 @@ func AdminDeleteChannel(c *gin.Context) {
 		return
 	}
 
+	err = dbBackend.DeleteMessagesFromChannel(channelID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete messages from channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = dbBackend.DeleteCharactersFromChannel(channelID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete characters from channel.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
 	err = dbBackend.DeleteChannel(channelID)
 	if err != nil {
 		if err == channels.ErrChannelNotFound {
@@ -342,6 +356,20 @@ func AdminDeleteUser(c *gin.Context) {
 	if existingUser.IsAdmin {
 		log.WithError(err).Error("Admin attempted to delete another admin.")
 		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	err = dbBackend.DeleteMessagesFromUser(userID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete messages from user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = dbBackend.DeleteCharactersFromUser(userID)
+	if err != nil {
+		log.WithError(err).Error("Failed to delete characters from user.")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

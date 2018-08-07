@@ -5,6 +5,8 @@ package postgresql
 import (
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/messages"
 	log "github.com/sirupsen/logrus"
@@ -119,7 +121,7 @@ func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
 
 	_, err = backend.db.Exec(sql, args...)
 	if err != nil {
-		log.WithError(err).Error("Failed to execute delet messages from channel query.")
+		log.WithError(err).Error("Failed to execute delete messages from channel query.")
 	}
 	return err
 }
@@ -153,4 +155,45 @@ func (backend Backend) UpdateMessage(id int, m *messages.Message) (*messages.Mes
 	}
 
 	return updatedMessage, nil
+}
+
+// DeleteMessagesFromUser deletes all of the messages that were from the input
+// User. This means that the Messages are from a Character that is the User's.
+func (backend Backend) DeleteMessagesFromUser(userID int) error {
+	findMessagesQuery := fmt.Sprintf("SELECT messages.id FROM messages INNER JOIN "+
+		"characters characters.id ON messages.character_id WHERE characters.user_id = %d", userID)
+
+	sql, args, err := PSQLBuilder().
+		Delete(messagesTable).
+		Where(fmt.Sprintf("id IN (%s)", findMessagesQuery)).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build delete messages from user sql.")
+		return err
+	}
+
+	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete messages from user query.")
+	}
+	return err
+}
+
+// DeleteMessagesFromCharacter deletes all of the messages that match the input
+// Character ID.
+func (backend Backend) DeleteMessagesFromCharacter(characterID int) error {
+	sql, args, err := PSQLBuilder().
+		Delete(messagesTable).
+		Where(squirrel.Eq{"character_id": characterID}).
+		ToSql()
+	if err != nil {
+		log.WithError(err).Error("Failed to build delete messages from character sql.")
+		return err
+	}
+
+	_, err = backend.db.Exec(sql, args...)
+	if err != nil {
+		log.WithError(err).Error("Failed to execute delete messages from character query.")
+	}
+	return err
 }

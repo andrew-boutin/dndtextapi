@@ -161,7 +161,14 @@ func DeleteCharacter(c *gin.Context) {
 		return
 	}
 
-	err := dbBackend.DeleteCharacter(character.ID)
+	err := dbBackend.DeleteMessagesFromCharacter(character.ID)
+	if err != nil {
+		log.WithError(err).WithField("characterID", character.ID).Error("Failed to delete messages from character.")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	err = dbBackend.DeleteCharacter(character.ID)
 	if err != nil {
 		log.WithError(err).WithField("characterID", character.ID).Error("Failed to delete character.")
 		c.AbortWithStatus(http.StatusInternalServerError)
