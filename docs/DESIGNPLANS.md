@@ -39,6 +39,7 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Separate file for sample data
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
 - Update docs that say the headers are required
+- Use http status codes in int tests
 
 ### Bot OBO User
 
