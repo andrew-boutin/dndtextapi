@@ -5,8 +5,6 @@ package postgresql
 import (
 	"fmt"
 
-	"github.com/Masterminds/squirrel"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/andrew-boutin/dndtextapi/messages"
 	log "github.com/sirupsen/logrus"
@@ -110,18 +108,9 @@ func (backend Backend) GetMessage(id int) (*messages.Message, error) {
 // DeleteMessagesFromChannel deletes all of the Messages in the database
 // that have their Channel match the given Channel ID.
 func (backend Backend) DeleteMessagesFromChannel(channelID int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(messagesTable).
-		Where(sq.Eq{"channel_id": channelID}).
-		ToSql()
+	err := backend.deleteMultiple(messagesTable, "channel_id", channelID)
 	if err != nil {
-		log.WithError(err).Error("Failed to build delete messages from channel query.")
-		return err
-	}
-
-	_, err = backend.db.Exec(sql, args...)
-	if err != nil {
-		log.WithError(err).Error("Failed to execute delete messages from channel query.")
+		log.WithError(err).Error("Issue with delete messages from character query.")
 	}
 	return err
 }
@@ -182,18 +171,9 @@ func (backend Backend) DeleteMessagesFromUser(userID int) error {
 // DeleteMessagesFromCharacter deletes all of the messages that match the input
 // Character ID.
 func (backend Backend) DeleteMessagesFromCharacter(characterID int) error {
-	sql, args, err := PSQLBuilder().
-		Delete(messagesTable).
-		Where(squirrel.Eq{"character_id": characterID}).
-		ToSql()
+	err := backend.deleteMultiple(messagesTable, "character_id", characterID)
 	if err != nil {
-		log.WithError(err).Error("Failed to build delete messages from character sql.")
-		return err
-	}
-
-	_, err = backend.db.Exec(sql, args...)
-	if err != nil {
-		log.WithError(err).Error("Failed to execute delete messages from character query.")
+		log.WithError(err).Error("Issue with delete messages from character query.")
 	}
 	return err
 }
