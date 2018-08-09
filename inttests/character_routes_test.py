@@ -3,12 +3,12 @@
 import requests, pytest, json
 from base import TestBase
 
-# TODO: Update, Delete, Create, Get - requires session fix
+# TODO: Update, Delete, Create, Get
 class TestCharacterRoutes(TestBase):
 
     def setup_method(self, test_method):
         super(TestCharacterRoutes, self).setup_method(test_method)
-        self.url = f"{self.base}/channels/%s/characters/" # TODO: Multi level path may not work w/ sessions
+        self.url = f"{self.base}/channels/%s/characters/"
 
     def teardown_method(self, test_method):
         super(TestCharacterRoutes, self).teardown_method(test_method)
