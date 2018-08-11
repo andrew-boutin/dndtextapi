@@ -83,17 +83,17 @@ Will add in validation logic on create and update to require that either both of
 
 ### 6. Add bot to corresponding Slack channel
 
-Follow [Slack Bot Setting Up The Events API](https://api.slack.com/bot-users#setup-events-api) to add your Slack bot to channels you want and to also make sure that it has access to the messagse in that channel.
+Follow [Slack Bot Setting Up The Events API](https://api.slack.com/bot-users#setup-events-api) to add your Slack bot to channels you want and to also make sure that it has access to the messages in that channel.
 
 At this point the bot will start listening to all messages that get sent in the channel that it was added to. It will essentially ignore all traffic since no users will have registered themselves yet.
 
-### 7. User allows Bot to send messages for them in API
+### 7. User allows bot to send messages for them in API
 
 Need to allow channel members to allow/disallow a bot from sending messages on behalf of their characters. Can do this by adding a field to the character object `Character.BotUsername`. This will be an optional field that defaults to blank. The user, and admins, can update their character to fill in `BotUsername` with their corresponding Slack username. This will enable the bot, that was added to the channel, to send messages from the Slack user identified from `BotUsername` for this character. The field can be updated back to blank to take away the bots authorization.
 
     PUT /channels/:id/characters/:id data{..., botusername=slackusername}
 
-### 8. User in Slack channel uses cmd to register with the Bot
+### 8. User in Slack channel uses cmd to register with the bot
 
 A Slack user can send a command to the bot to get themselves registered on that end. They will need to be signed into Slack using the username that was used on the `Character.BotUsername` in the API. Also, they should issue the command in the Slack channel that was used on the `Channel.BotChannel` in the API.
 
@@ -103,13 +103,13 @@ A similiar command will exist to remove themselves as well.
 
 ### 9. Bot parses register cmd and verifies data with API
 
-The bot is already listening for messages in the channel at this time. It will grab the register command and form a request. It will authenticate against the API first. Then it will attempt to retrieve the character matching the input character ID using its Slack bot id, the Slack channel that the request is from, and the character ID. If the `GET` on the character is successful then the Slack user has wired up everything correctly. At this point the bot will add the Slack user as one that has registered and being listening to all messages they send in the channel. The bot would just remove the user from the registered mapping if they send the command to remove themselves.
+The bot is already listening for messages in the channel at this time. It will grab the register command and form a request. It will authenticate against the API first. Then it will attempt to retrieve the character matching the input character ID using its Slack bot id, the Slack channel that the request is from, and the character ID. If the `GET` on the character is successful then the Slack user has wired up everything correctly. At this point the bot will add the Slack user as one that has registered and begin listening to all messages they send in the channel. The bot would just remove the user from the registered mapping if they send the command to remove themselves.
 
 ### 10. Registered user sends message in Slack channel
 
 At this point a user that has registered with the Slack bot can type any message into the Slack channel and the Slack bot will attempt to send the message to the API similarly to how it retrieved the user's character info. The Slack bot will have certain formats it expects the messages to be in so it knows if messages are for meta/story, actions, dice rolls, etc. If the formatting is wrong the Slack bot will respond to the user in Slack with an error message. If the formatting looks good the message will be sent to the API. The Slack bot will also inform the Slack channel if there are issues connecting to the API or with the message itself.
 
-## Preventing User Hijacking
+## Preventing user hijacking
 
 TODO: Still need to re-write this section.
 
@@ -125,7 +125,7 @@ Tieing Slack channel name to API channel name prevents Slack users from signing 
 
 The command only needs the corresponding character ID since the Slack bot id, channel name, and username are already known. The character ID will lead to the corresponding user and channel data as well since the user ID and channel ID are part of the character associated to the character ID. This means the Slack username on the character, Slack channel name on the channel, and the Slack bot on the channel can all be cross referenced.
 
-## Bot Design
+## Bot design
 
 Use [Simple-Slack-Bot](https://github.com/GregHilston/Simple-Slack-Bot) to create a Slack bot. Create a new GitHub repo for this. API side won't care what type of bot it is so other frameworks could be used in the future.
 
@@ -133,13 +133,13 @@ Will add in config files and config loading to handle the client credentials and
 
 The bot on startup, and periodically while running, will authenticate with the API and retrieve its own bot data. This will verify that the bot config is correct and that there is connectivity.
 
-Messages the bot received from registerd users will be checked to see if they meet formatting requirements to be a valid message for the API. If there are issues with the message then the Slack bot will send an error message to the Slack channel.
+Messages the bot received from registered users will be checked to see if they meet formatting requirements to be a valid message for the API. If there are issues with the message then the Slack bot will send an error message to the Slack channel.
 
 The Slack bot will let the Slack channel know about any connectivity issues sending messages along with any error messages from the API.
 
 ## Authentication
 
-### Bot Authentication
+### Bot authentication
 
 Utilize [oauth2 client credentials flow](https://developer.foresee.com/docs/oauth2-client-credentials-flow) to allow bots to authenticate with the api. The earlier steps handle the creation, access, and config of the client credentials per bot. Can utilize the [golang oauth2 client credentials package](https://godoc.org/golang.org/x/oauth2/clientcredentials) when implementing this.
 
@@ -154,11 +154,11 @@ TODO: More token research:
 - Can the access token be a JWT that we can include information such as bot id and user id that it's on behalf of? This would only work if the bot got a new token for every user it was sending messages for. Could use a query parameter potentially and utilize that in the `AuthenticationMiddleware`.
 - Need some more specifics on issuing, managing, and authenticating tokens. Refresh tokens? Expired?
 
-### User Authentication Changes
+### User authentication changes
 
 Can optionally change how users authenticate too. Stop using sessions/cookies and instead issue access tokens after the Google profile data has been retrieved. This would allow bots and users to authenticate in a similar manner and hopefully simplify things.
 
-## Additional Info
+## Additional info
 
 There is the potential for bot utility commands in Slack that wouldn't get sent to the API as messages.
 
