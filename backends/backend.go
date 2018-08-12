@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/andrew-boutin/dndtextapi/bots"
 	"github.com/andrew-boutin/dndtextapi/characters"
 	"github.com/andrew-boutin/dndtextapi/messages"
 	"github.com/andrew-boutin/dndtextapi/users"
@@ -57,6 +58,16 @@ type Backend interface {
 	UpdateCharacter(int, *characters.Character) (*characters.Character, error)
 	DeleteCharactersFromUser(int) error
 	DeleteCharactersFromChannel(int) error
+
+	// Bots functionality
+	GetAllBots() (bots.BotCollection, error)
+	GetBot(int) (*bots.Bot, error)
+	GetBotCreds(int) (*bots.BotClientCredentials, error)
+	DeleteBot(int) error
+	CreateBot(*bots.Bot) (*bots.Bot, error)
+	CreateBotCreds(*bots.Bot) (*bots.BotClientCredentials, error)
+	UpdateBot(int, *bots.Bot) (*bots.Bot, error)
+	DeleteBotCreds(int) error
 }
 
 // InitBackend initializes whatever backend matches the provided

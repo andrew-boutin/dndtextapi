@@ -40,9 +40,3 @@ Some of the stuff that still has to be done and notes about how to do some of it
 - Probably shouldn't need GOVENDOR_PATH and GOLINT_PATH
 - Update docs that say the headers are required
 - Use http status codes in int tests
-
-### Bot OBO User
-
-REST API would allow 3rd party apps (Slack/HipChat/Mupchat/etc.) to send Messages on behalf of Users.
-Ex: Could have a SlackBot that can listen in Slack and send out requests to this API so
-the final output could still be viewable on the site, but "gameplay" is in Slack.

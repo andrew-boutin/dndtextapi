@@ -180,6 +180,7 @@ func (backend Backend) deleteSingle(id int, tableName string) (wasFound bool, er
 	result, err := backend.db.Exec(sql, args...)
 	if err != nil {
 		log.WithError(err).Error("Failed to execute delete single query.")
+		return false, err
 	}
 
 	numRowsAffected, err := result.RowsAffected()
@@ -188,6 +189,7 @@ func (backend Backend) deleteSingle(id int, tableName string) (wasFound bool, er
 		return false, err
 	}
 
+	// TODO: true, nil ?
 	if numRowsAffected <= 0 {
 		return false, channels.ErrChannelNotFound
 	}

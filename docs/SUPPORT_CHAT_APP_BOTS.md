@@ -69,7 +69,7 @@ The user will need the client credentials for their bot in order to properly con
 
 Follow [Slack Bot Getting Started](https://api.slack.com/bot-users#getting-started) to create the bot in your Slack workspace.
 
-### 4. Set up bot and run
+### 4. Set up bot and run TODO: Left off here
 
 Add the client credentials config along with the config from Slack for the bot. Run the bot and verify the health check passes.
 

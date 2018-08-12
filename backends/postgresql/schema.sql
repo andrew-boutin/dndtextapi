@@ -46,11 +46,30 @@ CREATE TABLE messages (
     last_updated timestamp default current_timestamp
 );
 
+CREATE TABLE bots (
+    id bigserial primary key,
+    owner_id bigserial references users(id),
+    workspace varchar(200) NOT NULL,
+    created_on timestamp default current_timestamp,
+    last_updated timestamp default current_timestamp
+);
+
+CREATE TABLE bot_client_credentials (
+    id bigserial primary key,
+    bot_id bigserial references bots(id),
+    client_id varchar(200) NOT NULL,
+    client_secret varchar(200) NOT NULL,
+    created_on timestamp default current_timestamp,
+    last_updated timestamp default current_timestamp
+);
+
 -- Use function provided from functions.sql to handle updating lastmodified timestamps on updates
 CREATE TRIGGER users_updated_at_modtime BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER channels_updated_at_modtime BEFORE UPDATE ON channels FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER characters_updated_at_modtime BEFORE UPDATE ON characters FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 CREATE TRIGGER messages_updated_at_modtime BEFORE UPDATE ON messages FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+CREATE TRIGGER bots_updated_at_modtime BEFORE UPDATE ON bots FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
+CREATE TRIGGER bot_client_credentials_updated_at_modtime BEFORE UPDATE ON bot_client_credentials FOR EACH ROW EXECUTE PROCEDURE update_lastupdated_column();
 
 -- Sample data
 INSERT INTO users

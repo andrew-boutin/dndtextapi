@@ -81,6 +81,7 @@ func RegisterMiddleware(r *gin.Engine, backend backends.Backend) {
 	RegisterUsersRoutes(authorized)
 	RegisterMessagesRoutes(authorized)
 	RegisterCharactersRoutes(authorized)
+	RegisterBotsRoutes(authorized)
 
 	// Set up all of the admin only routes
 	admin := authorized.Group("/") // TODO: want this to be `/admin`

@@ -48,7 +48,7 @@ func (backend Backend) GetMessagesInChannel(channelID int, onlyStory *bool) (mes
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
-		log.WithError(err).Error("Failed tobuild get messages in channel query.")
+		log.WithError(err).Error("Failed to build get messages in channel query.")
 		return nil, err
 	}
 

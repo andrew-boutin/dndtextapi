@@ -37,6 +37,9 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.GET("/admin/characters/:id", ValidateHeaders(acceptHeader), AdminGetCharacter)
 	g.PUT("/admin/characters/:id", ValidateHeaders(acceptHeader, contentTypeHeader), AdminUpdateCharacter)
 	g.DELETE("/admin/characters/:id", AdminDeleteCharacter)
+
+	// Routes to admin Bots
+	// TODO: Get all, Get single, Update single, Delete single. Get single credentials
 }
 
 // RequireAdminHandler requires that the authenticated User be an admin or else
