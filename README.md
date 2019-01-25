@@ -8,6 +8,8 @@ At a high level it provides: Users, Channels, Characters, and Messages.
 
 See the [design](docs/DESIGN.md) docs for more info such as the [available endpoints](docs/DESIGN.md#endpoints).
 
+There's a Slack bot integration [dndtextbotslack](https://github.com/andrew-boutin/dndtextbotslack) and UI [dndtextui](https://github.com/mupchrch/dndtextui) for this too.
+
 ## Running
 
 Set up the [prerequisites](docs/PREREQUISITES.md).
@@ -25,3 +27,7 @@ Dnd Text API is under [license](LICENSE).
 ## Copyright
 
 This repository is under [copyright](COPYRIGHT.md).
+
+---
+
+Check out my [personal site](https://andrewboutin.com)!
