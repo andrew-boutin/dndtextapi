@@ -3,6 +3,6 @@ chardet==3.0.4
 idna==2.7
 mockserver-client==0.0.5
 requests==2.19.1
-urllib3==1.23
+urllib3==1.26.5
 python-dateutil===2.7.3
 pytest==3.7.0
